@@ -12,7 +12,13 @@ const TrendingTopics: React.FC = () => {
             <div className="flex items-center">
               <span className="text-sm font-medium">{topic.topic}</span>
               <Badge 
-                className={`ml-2 sentiment-badge-${topic.sentiment}`}
+                className={`ml-2 ${
+                  topic.sentiment === "positive" 
+                    ? "bg-sentiment-positive" 
+                    : topic.sentiment === "negative" 
+                    ? "bg-sentiment-negative" 
+                    : "bg-sentiment-neutral"
+                }`}
               >
                 {topic.sentiment}
               </Badge>

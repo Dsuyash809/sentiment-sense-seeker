@@ -1,6 +1,6 @@
 
 import React from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { emotionData } from "@/utils/mockData";
 
 const EmotionBreakdown: React.FC = () => {
