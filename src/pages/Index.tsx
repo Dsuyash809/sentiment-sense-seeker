@@ -3,9 +3,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Dashboard from "@/components/Dashboard";
 import { Button } from "@/components/ui/button";
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Index: React.FC = () => {
+  const { user, signOut } = useAuth();
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-card">
@@ -23,12 +26,25 @@ const Index: React.FC = () => {
               Social Media Sentiment Analysis Tool
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/login"><LogIn className="mr-2 h-4 w-4" /> Log in</Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link to="/signup"><UserPlus className="mr-2 h-4 w-4" /> Sign up</Link>
-              </Button>
+              {user ? (
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/social-analyzer">Go to Analyzer</Link>
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => signOut()}>
+                    <LogOut className="mr-2 h-4 w-4" /> Log out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/login"><LogIn className="mr-2 h-4 w-4" /> Log in</Link>
+                  </Button>
+                  <Button size="sm" asChild>
+                    <Link to="/signup"><UserPlus className="mr-2 h-4 w-4" /> Sign up</Link>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -37,9 +53,15 @@ const Index: React.FC = () => {
       <main className="container py-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Welcome to SentimentSense</h2>
-          <Button asChild>
-            <Link to="/social-analyzer">Try Social Media Analyzer</Link>
-          </Button>
+          {user ? (
+            <div className="text-sm text-muted-foreground">
+              Logged in as: <span className="font-medium">{user.email}</span>
+            </div>
+          ) : (
+            <Button asChild>
+              <Link to="/social-analyzer">Try Social Media Analyzer</Link>
+            </Button>
+          )}
         </div>
         <Dashboard />
       </main>

@@ -1,420 +1,343 @@
 
 import React, { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, LogOut, RefreshCw, Twitter, Instagram } from "lucide-react";
+import { Link } from "react-router-dom";
 
-type Platform = "twitter" | "instagram";
-type PostAnalysis = {
-  id: string;
-  content: string;
-  author: string;
-  timestamp: string;
-  sentiment: "positive" | "negative" | "neutral";
-  score: number;
-  emotions: { type: string; score: number }[];
+// Mock data for sentiment analysis results
+const mockAnalyze = (username: string, platform: 'twitter' | 'instagram') => {
+  // In a real app, this would call your Supabase functions to fetch data from social media APIs
+  const posts = Array(10).fill(null).map((_, i) => ({
+    id: `post-${i}`,
+    content: `Sample ${platform === 'twitter' ? 'tweet' : 'post'} #${i + 1} from ${username}. This is a demonstration of sentiment analysis.`,
+    sentiment: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
+    score: Math.random(),
+    date: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(),
+    emotions: [
+      { type: 'happiness', score: Math.random() },
+      { type: 'sadness', score: Math.random() },
+      { type: 'anger', score: Math.random() },
+      { type: 'fear', score: Math.random() },
+      { type: 'surprise', score: Math.random() }
+    ].sort((a, b) => b.score - a.score) // Sort by score descending
+  }));
+
+  const overallSentiment = {
+    positive: posts.filter(post => post.sentiment === 'positive').length / posts.length,
+    negative: posts.filter(post => post.sentiment === 'negative').length / posts.length,
+    neutral: posts.filter(post => post.sentiment === 'neutral').length / posts.length,
+  };
+
+  const emotions = [
+    { type: 'happiness', score: posts.reduce((sum, post) => sum + post.emotions.find(e => e.type === 'happiness')!.score, 0) / posts.length },
+    { type: 'sadness', score: posts.reduce((sum, post) => sum + post.emotions.find(e => e.type === 'sadness')!.score, 0) / posts.length },
+    { type: 'anger', score: posts.reduce((sum, post) => sum + post.emotions.find(e => e.type === 'anger')!.score, 0) / posts.length },
+    { type: 'fear', score: posts.reduce((sum, post) => sum + post.emotions.find(e => e.type === 'fear')!.score, 0) / posts.length },
+    { type: 'surprise', score: posts.reduce((sum, post) => sum + post.emotions.find(e => e.type === 'surprise')!.score, 0) / posts.length }
+  ].sort((a, b) => b.score - a.score);
+
+  return {
+    posts,
+    overallSentiment,
+    emotions,
+    timestamp: new Date().toISOString()
+  };
 };
 
 const SocialAnalyzer: React.FC = () => {
-  const [platform, setPlatform] = useState<Platform>("twitter");
-  const [username, setUsername] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState<PostAnalysis[]>([]);
+  const { user, signOut } = useAuth();
+  const [platform, setPlatform] = useState<'twitter' | 'instagram'>('twitter');
+  const [username, setUsername] = useState('');
   const { toast } = useToast();
 
-  const handleAnalyze = async () => {
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
+    queryKey: ['socialAnalysis', platform, username],
+    queryFn: () => {
+      if (!username) throw new Error('Please enter a username');
+      return mockAnalyze(username, platform);
+    },
+    enabled: false,
+    retry: 1
+  });
+
+  const handleAnalyze = () => {
     if (!username.trim()) {
       toast({
         title: "Username required",
-        description: "Please enter a username to analyze.",
+        description: "Please enter a valid username to analyze.",
         variant: "destructive",
       });
       return;
     }
 
-    setIsAnalyzing(true);
-    
-    try {
-      // This is a placeholder for actual API integration
-      // In a real app, you would connect to Twitter/Instagram APIs through a backend
-      
-      // For demo purposes, we'll generate mock data
-      setTimeout(() => {
-        const mockResults = generateMockAnalysis(platform, username);
-        setResults(mockResults);
-        setIsAnalyzing(false);
-        
-        toast({
-          title: "Analysis complete",
-          description: `Analyzed ${mockResults.length} ${platform === "twitter" ? "tweets" : "posts"} from @${username}`,
-        });
-      }, 2000);
-    } catch (error) {
-      setIsAnalyzing(false);
-      toast({
-        title: "Analysis failed",
-        description: "There was an error analyzing the social media content.",
-        variant: "destructive",
-      });
+    refetch();
+  };
+
+  const getSentimentColor = (sentiment: string) => {
+    switch (sentiment) {
+      case 'positive': return 'bg-green-500';
+      case 'negative': return 'bg-red-500';
+      case 'neutral': return 'bg-blue-500';
+      default: return 'bg-gray-500';
     }
   };
 
-  // Helper function to generate sentiment summary data
-  const getSentimentSummary = () => {
-    if (!results.length) return [];
-    
-    const counts = {
-      positive: 0,
-      negative: 0,
-      neutral: 0
-    };
-    
-    results.forEach(post => {
-      counts[post.sentiment]++;
-    });
-    
-    return [
-      { name: "Positive", value: counts.positive, color: "#4ade80" },
-      { name: "Negative", value: counts.negative, color: "#f87171" },
-      { name: "Neutral", value: counts.neutral, color: "#94a3b8" }
-    ];
-  };
-
-  // Helper function to generate emotion summary data
-  const getEmotionSummary = () => {
-    if (!results.length) return [];
-    
-    const emotions: Record<string, number> = {};
-    
-    results.forEach(post => {
-      post.emotions.forEach(emotion => {
-        if (!emotions[emotion.type]) {
-          emotions[emotion.type] = 0;
-        }
-        emotions[emotion.type] += emotion.score;
-      });
-    });
-    
-    // Convert to array and sort by score
-    return Object.entries(emotions)
-      .map(([name, value]) => ({ 
-        name, 
-        value: value / results.length, 
-        color: getEmotionColor(name)
-      }))
-      .sort((a, b) => b.value - a.value);
-  };
-
-  // Helper function to get color for emotions
   const getEmotionColor = (emotion: string) => {
-    const colors: Record<string, string> = {
-      "joy": "#facc15",
-      "sadness": "#3b82f6",
-      "anger": "#ef4444",
-      "fear": "#a855f7",
-      "surprise": "#ec4899",
-      "disgust": "#84cc16",
-      "love": "#f472b6",
-      "humor": "#fb923c"
-    };
-    
-    return colors[emotion.toLowerCase()] || "#94a3b8";
+    switch (emotion) {
+      case 'happiness': return 'bg-green-500';
+      case 'sadness': return 'bg-blue-500';
+      case 'anger': return 'bg-red-500';
+      case 'fear': return 'bg-purple-500';
+      case 'surprise': return 'bg-yellow-500';
+      default: return 'bg-gray-500';
+    }
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6 min-h-screen">
-      <div className="flex flex-col space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Social Media Analyzer</h1>
-        <p className="text-muted-foreground">
-          Analyze sentiment and emotions from social media posts
-        </p>
-      </div>
-
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle>Select Platform and Username</CardTitle>
-          <CardDescription>
-            Choose a social media platform and enter a username to analyze
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="w-full sm:w-1/3">
-              <Select
-                value={platform}
-                onValueChange={(value) => setPlatform(value as Platform)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select platform" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="twitter">Twitter</SelectItem>
-                  <SelectItem value="instagram">Instagram</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1">
-              <div className="flex w-full items-center space-x-2">
-                <span className="text-muted-foreground">@</span>
-                <Input
-                  placeholder={`Enter ${platform} username`}
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                />
-                <Button 
-                  onClick={handleAnalyze} 
-                  disabled={isAnalyzing || !username.trim()}
-                >
-                  {isAnalyzing ? "Analyzing..." : "Analyze"}
-                </Button>
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-card">
+        <div className="container py-4 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <Link to="/" className="flex items-center space-x-2">
+              <ArrowLeft className="h-4 w-4" />
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-sm">SS</span>
               </div>
-            </div>
+              <h1 className="text-xl font-bold text-card-foreground tracking-tight">
+                SentimentSense
+              </h1>
+            </Link>
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center gap-3">
+            {user && (
+              <div className="text-sm">
+                <span className="text-muted-foreground mr-2">Signed in as:</span>
+                <span className="font-medium">{user.email}</span>
+              </div>
+            )}
+            <Button variant="outline" size="sm" onClick={() => signOut()}>
+              <LogOut className="mr-2 h-4 w-4" /> Sign out
+            </Button>
+          </div>
+        </div>
+      </header>
 
-      {results.length > 0 && (
-        <>
-          <Tabs defaultValue="posts" className="space-y-4">
-            <TabsList>
-              <TabsTrigger value="posts">Posts</TabsTrigger>
-              <TabsTrigger value="summary">Summary</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="posts" className="space-y-4">
-              <ScrollArea className="h-[500px] rounded-md border p-4">
-                <div className="space-y-4">
-                  {results.map((post) => (
-                    <Card key={post.id} className="overflow-hidden">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
-                              {post.author.charAt(0)}
-                            </div>
-                            <div className="ml-2">
-                              <p className="font-medium text-sm">{post.author}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {new Date(post.timestamp).toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                          <Badge
-                            className={`
-                              ${post.sentiment === "positive" 
-                                ? "bg-sentiment-positive" 
-                                : post.sentiment === "negative" 
-                                  ? "bg-sentiment-negative" 
-                                  : "bg-sentiment-neutral"
-                              }`
-                            }
-                          >
-                            {post.sentiment} ({Math.round(post.score * 100)}%)
-                          </Badge>
+      <main className="container py-6 max-w-7xl mx-auto">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-2xl">Social Media Analyzer</CardTitle>
+            <CardDescription>
+              Enter a username to analyze their social media posts
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="md:col-span-1">
+                  <label htmlFor="platform" className="text-sm font-medium mb-2 block">
+                    Platform
+                  </label>
+                  <Select 
+                    value={platform} 
+                    onValueChange={(value: 'twitter' | 'instagram') => setPlatform(value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select platform" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="twitter">
+                        <div className="flex items-center gap-2">
+                          <Twitter className="h-4 w-4" />
+                          Twitter
                         </div>
-                        
-                        <p className="text-sm mb-4">{post.content}</p>
-                        
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-medium">Emotions</h4>
-                          <div className="space-y-1">
-                            {post.emotions.map((emotion) => (
-                              <div key={emotion.type} className="space-y-1">
-                                <div className="flex justify-between text-sm">
-                                  <span>{emotion.type}</span>
-                                  <span>{Math.round(emotion.score * 100)}%</span>
+                      </SelectItem>
+                      <SelectItem value="instagram">
+                        <div className="flex items-center gap-2">
+                          <Instagram className="h-4 w-4" />
+                          Instagram
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="md:col-span-2">
+                  <label htmlFor="username" className="text-sm font-medium mb-2 block">
+                    Username
+                  </label>
+                  <Input
+                    id="username"
+                    placeholder={`Enter ${platform} username`}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                  />
+                </div>
+                <div className="md:col-span-1 flex items-end">
+                  <Button 
+                    onClick={handleAnalyze} 
+                    className="w-full" 
+                    disabled={isLoading || isRefetching || !username.trim()}
+                  >
+                    {(isLoading || isRefetching) ? (
+                      <>
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      'Analyze'
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Results section */}
+              {data && (
+                <div className="mt-8">
+                  <Tabs defaultValue="overview" className="w-full">
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="overview">Overview</TabsTrigger>
+                      <TabsTrigger value="posts">Posts Analysis</TabsTrigger>
+                      <TabsTrigger value="emotions">Emotion Breakdown</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="overview">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Overall Sentiment Analysis</CardTitle>
+                          <CardDescription>
+                            Analysis of @{username}'s last 10 {platform === 'twitter' ? 'tweets' : 'posts'}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {Object.entries(data.overallSentiment).map(([sentiment, score]) => (
+                              <div key={sentiment} className="space-y-2">
+                                <div className="flex justify-between items-center">
+                                  <h3 className="text-sm font-medium capitalize">{sentiment}</h3>
+                                  <span className="text-sm">{Math.round(score * 100)}%</span>
                                 </div>
                                 <Progress 
-                                  value={emotion.score * 100} 
-                                  className="h-1.5"
-                                  indicatorClassName={`bg-[${getEmotionColor(emotion.type)}]`}
+                                  value={score * 100} 
+                                  className="h-2"
                                 />
                               </div>
                             ))}
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          
+                          <div className="mt-8">
+                            <h3 className="text-lg font-medium mb-4">Top Emotions</h3>
+                            <div className="space-y-4">
+                              {data.emotions.slice(0, 3).map((emotion) => (
+                                <div key={emotion.type} className="space-y-1">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-sm font-medium capitalize">{emotion.type}</span>
+                                    <span className="text-sm">{Math.round(emotion.score * 100)}%</span>
+                                  </div>
+                                  <Progress 
+                                    value={emotion.score * 100} 
+                                    className={`h-2 ${getEmotionColor(emotion.type)} bg-opacity-20`}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="mt-6 text-sm text-muted-foreground">
+                            <p>Analysis performed at {new Date(data.timestamp).toLocaleString()}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                    
+                    <TabsContent value="posts">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Individual Posts Analysis</CardTitle>
+                          <CardDescription>
+                            Sentiment analysis of each post
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {data.posts.map((post) => (
+                              <Card key={post.id} className="p-4 shadow-sm border">
+                                <div className="flex justify-between items-start mb-2">
+                                  <p className="text-sm">{post.content}</p>
+                                  <Badge className={`${getSentimentColor(post.sentiment)} text-white`}>
+                                    {post.sentiment}
+                                  </Badge>
+                                </div>
+                                <div className="text-xs text-muted-foreground mb-2">
+                                  Posted on {new Date(post.date).toLocaleDateString()}
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                  {post.emotions.slice(0, 3).map((emotion) => (
+                                    <Badge 
+                                      key={emotion.type} 
+                                      variant="outline" 
+                                      className="text-xs"
+                                    >
+                                      {emotion.type}: {Math.round(emotion.score * 100)}%
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                    
+                    <TabsContent value="emotions">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Detailed Emotion Analysis</CardTitle>
+                          <CardDescription>
+                            Breakdown of emotional context across all analyzed posts
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            {data.emotions.map((emotion) => (
+                              <div key={emotion.type} className="space-y-1">
+                                <div className="flex justify-between items-center">
+                                  <h3 className="text-sm font-medium capitalize">{emotion.type}</h3>
+                                  <span className="text-sm">{Math.round(emotion.score * 100)}%</span>
+                                </div>
+                                <Progress 
+                                  value={emotion.score * 100} 
+                                  className={`h-3 ${getEmotionColor(emotion.type)} bg-opacity-20`}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </TabsContent>
+                  </Tabs>
                 </div>
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="summary">
-              <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle>Sentiment Distribution</CardTitle>
-                    <CardDescription>Overall sentiment breakdown</CardDescription>
-                  </CardHeader>
-                  <CardContent className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={getSentimentSummary()}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {getSentimentSummary().map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle>Emotion Analysis</CardTitle>
-                    <CardDescription>Top emotions detected</CardDescription>
-                  </CardHeader>
-                  <CardContent className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={getEmotionSummary().slice(0, 5)}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={5}
-                          dataKey="value"
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        >
-                          {getEmotionSummary().slice(0, 5).map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => `${(Number(value) * 100).toFixed(0)}%`} />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </>
-      )}
+              )}
+
+              {isError && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
+                  <p className="text-red-800">There was an error processing your request. Please try again.</p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
-};
-
-// Mock data generator
-const generateMockAnalysis = (platform: Platform, username: string): PostAnalysis[] => {
-  const emotions = ["joy", "sadness", "anger", "fear", "surprise", "disgust", "love", "humor"];
-  const results: PostAnalysis[] = [];
-  
-  // Generate 10 mock posts
-  for (let i = 0; i < 10; i++) {
-    const sentiment = ["positive", "negative", "neutral"][Math.floor(Math.random() * 3)] as "positive" | "negative" | "neutral";
-    const score = sentiment === "neutral" 
-      ? 0.4 + Math.random() * 0.2 
-      : 0.6 + Math.random() * 0.4;
-    
-    // Generate 2-4 emotions for each post
-    const postEmotions = [];
-    const emotionCount = 2 + Math.floor(Math.random() * 3);
-    const shuffledEmotions = [...emotions].sort(() => 0.5 - Math.random());
-    
-    for (let j = 0; j < emotionCount; j++) {
-      postEmotions.push({
-        type: shuffledEmotions[j],
-        score: 0.2 + Math.random() * 0.8
-      });
-    }
-    
-    // Normalize emotion scores to sum to 1
-    const totalScore = postEmotions.reduce((sum, emotion) => sum + emotion.score, 0);
-    postEmotions.forEach(emotion => {
-      emotion.score = emotion.score / totalScore;
-    });
-    
-    const date = new Date();
-    date.setDate(date.getDate() - Math.floor(Math.random() * 30));
-    
-    results.push({
-      id: `post-${i}`,
-      author: username,
-      content: generateMockContent(platform, sentiment),
-      timestamp: date.toISOString(),
-      sentiment,
-      score: sentiment === "neutral" ? 0.5 : score,
-      emotions: postEmotions
-    });
-  }
-  
-  return results;
-};
-
-// Generate mock content based on platform and sentiment
-const generateMockContent = (platform: Platform, sentiment: string): string => {
-  const contents = {
-    twitter: {
-      positive: [
-        "Just had the most amazing experience with this product! Highly recommend! 🌟",
-        "The latest update is incredibly helpful. So impressed with the improvements! #innovation",
-        "Can't believe how quick the customer service was today. Kudos to the team! 👏",
-        "This is game-changing! Absolutely love how it's transformed my workflow!",
-        "The best decision I made this year was switching to this service. Worth every penny!"
-      ],
-      negative: [
-        "Extremely disappointed with the quality. Definitely not what I expected. 😡",
-        "The new interface is so confusing. Why change something that worked perfectly fine?",
-        "Waited for hours just to be told they couldn't help. Worst service ever.",
-        "This app keeps crashing every time I try to use it. Fix this immediately!",
-        "Not worth the hype at all. Save your money and look elsewhere."
-      ],
-      neutral: [
-        "Just got the new update. Trying to figure out how everything works now.",
-        "Interesting approach to solving this problem. Not sure if it'll catch on though.",
-        "Here's my unboxing of the latest product. Will share my thoughts after using it.",
-        "Anyone else notice the change in policy? Wondering what prompted this.",
-        "The features are comprehensive but might be overwhelming for new users."
-      ]
-    },
-    instagram: {
-      positive: [
-        "Absolutely loving this view! Nature never disappoints. ❤️ #blessed #naturelovers",
-        "Best day ever with my favorite people! Creating memories that will last a lifetime. ✨",
-        "Finally achieved my fitness goal! The journey was worth every drop of sweat. 💪 #motivation",
-        "This new café is a hidden gem! The atmosphere is perfect and the coffee is divine. ☕",
-        "Grateful for these moments of peace and reflection. Finding joy in the simple things. 🙏"
-      ],
-      negative: [
-        "Worst travel experience ever. Don't book with this company unless you want your vacation ruined. 😠",
-        "So disappointed with this restaurant. Overpriced and underwhelming food. Not coming back.",
-        "The quality of this product is terrible. Completely falling apart after just one week. #ripoff",
-        "Can't believe how rude the staff was today. Customer service seems to be a forgotten concept.",
-        "Traffic has been a nightmare all week. City planning needs serious improvement. 🚗😤"
-      ],
-      neutral: [
-        "Just another day at the office. Working through the project deadlines one by one.",
-        "Weather forecast says rain tomorrow. Might need to reschedule the outdoor activities.",
-        "Trying out this new recipe tonight. Let's see how it turns out compared to the original.",
-        "The exhibition was interesting. Different from what I expected but worth checking out.",
-        "Taking a social media break next week. Will be back with updates soon."
-      ]
-    }
-  };
-  
-  const options = contents[platform][sentiment as keyof typeof contents[typeof platform]];
-  return options[Math.floor(Math.random() * options.length)];
 };
 
 export default SocialAnalyzer;

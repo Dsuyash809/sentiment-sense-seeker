@@ -1,18 +1,18 @@
 
-import React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FcGoogle } from "react-icons/fc";
+import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
 const Signup: React.FC = () => {
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [confirmPassword, setConfirmPassword] = React.useState("");
-  const [isLoading, setIsLoading] = React.useState(false);
-  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const { signUp, googleSignIn, loading, user } = useAuth();
   const { toast } = useToast();
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -27,43 +27,17 @@ const Signup: React.FC = () => {
       return;
     }
     
-    setIsLoading(true);
-
     try {
-      // This is a placeholder for actual registration logic
-      // In a real app, you would connect to Supabase or another auth provider
-      console.log("Signup attempt:", email);
-      
-      // Simulate successful signup for demo purposes
-      setTimeout(() => {
-        setIsLoading(false);
-        toast({
-          title: "Account created!",
-          description: "You have successfully signed up.",
-        });
-        navigate("/login");
-      }, 1000);
+      await signUp(email, password);
     } catch (error) {
-      setIsLoading(false);
-      toast({
-        title: "Signup failed",
-        description: "There was an error creating your account.",
-        variant: "destructive",
-      });
+      console.error("Error during signup:", error);
     }
   };
 
-  const handleGoogleSignup = () => {
-    setIsLoading(true);
-    
-    // Placeholder for Google signup integration
-    // In a real app, you would connect to Supabase or Firebase for social auth
-    toast({
-      title: "Google Signup",
-      description: "This feature requires backend integration with Google OAuth.",
-    });
-    setIsLoading(false);
-  };
+  // Redirect if user is already logged in
+  if (user) {
+    return <Navigate to="/social-analyzer" />;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -113,8 +87,8 @@ const Signup: React.FC = () => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating account..." : "Create account"}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Creating account..." : "Create account"}
             </Button>
           </form>
           <div className="relative my-4">
@@ -131,8 +105,8 @@ const Signup: React.FC = () => {
             variant="outline" 
             type="button" 
             className="w-full" 
-            onClick={handleGoogleSignup}
-            disabled={isLoading}
+            onClick={googleSignIn}
+            disabled={loading}
           >
             <FcGoogle className="mr-2 h-4 w-4" />
             Google

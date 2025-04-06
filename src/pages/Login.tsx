@@ -1,58 +1,30 @@
 
-import React from "react";
-import { useNavigate, Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FcGoogle } from "react-icons/fc";
-import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login: React.FC = () => {
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
-  const [isLoading, setIsLoading] = React.useState(false);
-  const navigate = useNavigate();
-  const { toast } = useToast();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { signIn, googleSignIn, loading, user } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-
     try {
-      // This is a placeholder for actual authentication logic
-      // In a real app, you would connect to Supabase or another auth provider
-      console.log("Login attempt:", email, password);
-      
-      // Simulate successful login for demo purposes
-      setTimeout(() => {
-        setIsLoading(false);
-        toast({
-          title: "Success!",
-          description: "You have been logged in successfully.",
-        });
-        navigate("/");
-      }, 1000);
+      await signIn(email, password);
     } catch (error) {
-      setIsLoading(false);
-      toast({
-        title: "Login failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive",
-      });
+      console.error("Error during login:", error);
     }
   };
 
-  const handleGoogleLogin = () => {
-    setIsLoading(true);
-    
-    // Placeholder for Google login integration
-    // In a real app, you would connect to Supabase or Firebase for social auth
-    toast({
-      title: "Google Login",
-      description: "This feature requires backend integration with Google OAuth.",
-    });
-    setIsLoading(false);
-  };
+  // Redirect if user is already logged in
+  if (user) {
+    return <Navigate to="/social-analyzer" />;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -95,8 +67,8 @@ const Login: React.FC = () => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
           <div className="relative my-4">
@@ -113,8 +85,8 @@ const Login: React.FC = () => {
             variant="outline" 
             type="button" 
             className="w-full" 
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
+            onClick={googleSignIn}
+            disabled={loading}
           >
             <FcGoogle className="mr-2 h-4 w-4" />
             Google
