@@ -14,57 +14,29 @@ import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, LogOut, RefreshCw, Twitter, Instagram } from "lucide-react";
 import { Link } from "react-router-dom";
 
-// Mock data for sentiment analysis results
-const mockAnalyze = (username: string, platform: 'twitter' | 'instagram') => {
-  // In a real app, this would call your Supabase functions to fetch data from social media APIs
-  const posts = Array(10).fill(null).map((_, i) => ({
-    id: `post-${i}`,
-    content: `Sample ${platform === 'twitter' ? 'tweet' : 'post'} #${i + 1} from ${username}. This is a demonstration of sentiment analysis.`,
-    sentiment: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
-    score: Math.random(),
-    date: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString(),
-    emotions: [
-      { type: 'happiness', score: Math.random() },
-      { type: 'sadness', score: Math.random() },
-      { type: 'anger', score: Math.random() },
-      { type: 'fear', score: Math.random() },
-      { type: 'surprise', score: Math.random() }
-    ].sort((a, b) => b.score - a.score) // Sort by score descending
-  }));
-
-  const overallSentiment = {
-    positive: posts.filter(post => post.sentiment === 'positive').length / posts.length,
-    negative: posts.filter(post => post.sentiment === 'negative').length / posts.length,
-    neutral: posts.filter(post => post.sentiment === 'neutral').length / posts.length,
-  };
-
-  const emotions = [
-    { type: 'happiness', score: posts.reduce((sum, post) => sum + post.emotions.find(e => e.type === 'happiness')!.score, 0) / posts.length },
-    { type: 'sadness', score: posts.reduce((sum, post) => sum + post.emotions.find(e => e.type === 'sadness')!.score, 0) / posts.length },
-    { type: 'anger', score: posts.reduce((sum, post) => sum + post.emotions.find(e => e.type === 'anger')!.score, 0) / posts.length },
-    { type: 'fear', score: posts.reduce((sum, post) => sum + post.emotions.find(e => e.type === 'fear')!.score, 0) / posts.length },
-    { type: 'surprise', score: posts.reduce((sum, post) => sum + post.emotions.find(e => e.type === 'surprise')!.score, 0) / posts.length }
-  ].sort((a, b) => b.score - a.score);
-
-  return {
-    posts,
-    overallSentiment,
-    emotions,
-    timestamp: new Date().toISOString()
-  };
-};
-
 const SocialAnalyzer: React.FC = () => {
   const { user, signOut } = useAuth();
   const [platform, setPlatform] = useState<'twitter' | 'instagram'>('twitter');
   const [username, setUsername] = useState('');
   const { toast } = useToast();
 
-  const { data, isLoading, isError, refetch, isRefetching } = useQuery({
+  // Modified to use our new edge function
+  const { data, isLoading, isError, refetch, isRefetching, error } = useQuery({
     queryKey: ['socialAnalysis', platform, username],
-    queryFn: () => {
+    queryFn: async () => {
       if (!username) throw new Error('Please enter a username');
-      return mockAnalyze(username, platform);
+      
+      try {
+        const { data, error } = await supabase.functions.invoke('fetch-tweets', {
+          body: { username, platform }
+        });
+        
+        if (error) throw new Error(error.message);
+        return data;
+      } catch (err: any) {
+        console.error('Error fetching tweets:', err);
+        throw new Error(err.message || 'Failed to fetch tweets');
+      }
     },
     enabled: false,
     retry: 1
@@ -161,10 +133,10 @@ const SocialAnalyzer: React.FC = () => {
                           Twitter
                         </div>
                       </SelectItem>
-                      <SelectItem value="instagram">
+                      <SelectItem value="instagram" disabled>
                         <div className="flex items-center gap-2">
                           <Instagram className="h-4 w-4" />
-                          Instagram
+                          Instagram (Coming soon)
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -199,6 +171,15 @@ const SocialAnalyzer: React.FC = () => {
                 </div>
               </div>
 
+              {/* Error message display */}
+              {isError && (
+                <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
+                  <p className="text-red-800">
+                    {error instanceof Error ? error.message : "There was an error processing your request. Please try again."}
+                  </p>
+                </div>
+              )}
+
               {/* Results section */}
               {data && (
                 <div className="mt-8">
@@ -214,7 +195,7 @@ const SocialAnalyzer: React.FC = () => {
                         <CardHeader>
                           <CardTitle>Overall Sentiment Analysis</CardTitle>
                           <CardDescription>
-                            Analysis of @{username}'s last 10 {platform === 'twitter' ? 'tweets' : 'posts'}
+                            Analysis of @{username}'s recent {platform === 'twitter' ? 'tweets' : 'posts'}
                           </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -223,10 +204,10 @@ const SocialAnalyzer: React.FC = () => {
                               <div key={sentiment} className="space-y-2">
                                 <div className="flex justify-between items-center">
                                   <h3 className="text-sm font-medium capitalize">{sentiment}</h3>
-                                  <span className="text-sm">{Math.round(score * 100)}%</span>
+                                  <span className="text-sm">{Math.round(Number(score) * 100)}%</span>
                                 </div>
                                 <Progress 
-                                  value={score * 100} 
+                                  value={Number(score) * 100} 
                                   className="h-2"
                                 />
                               </div>
@@ -236,7 +217,7 @@ const SocialAnalyzer: React.FC = () => {
                           <div className="mt-8">
                             <h3 className="text-lg font-medium mb-4">Top Emotions</h3>
                             <div className="space-y-4">
-                              {data.emotions.slice(0, 3).map((emotion) => (
+                              {data.emotions.slice(0, 3).map((emotion: any) => (
                                 <div key={emotion.type} className="space-y-1">
                                   <div className="flex justify-between items-center">
                                     <span className="text-sm font-medium capitalize">{emotion.type}</span>
@@ -268,7 +249,7 @@ const SocialAnalyzer: React.FC = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-4">
-                            {data.posts.map((post) => (
+                            {data.posts.map((post: any) => (
                               <Card key={post.id} className="p-4 shadow-sm border">
                                 <div className="flex justify-between items-start mb-2">
                                   <p className="text-sm">{post.content}</p>
@@ -280,7 +261,7 @@ const SocialAnalyzer: React.FC = () => {
                                   Posted on {new Date(post.date).toLocaleDateString()}
                                 </div>
                                 <div className="flex flex-wrap gap-2">
-                                  {post.emotions.slice(0, 3).map((emotion) => (
+                                  {post.emotions.slice(0, 3).map((emotion: any) => (
                                     <Badge 
                                       key={emotion.type} 
                                       variant="outline" 
@@ -307,7 +288,7 @@ const SocialAnalyzer: React.FC = () => {
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-4">
-                            {data.emotions.map((emotion) => (
+                            {data.emotions.map((emotion: any) => (
                               <div key={emotion.type} className="space-y-1">
                                 <div className="flex justify-between items-center">
                                   <h3 className="text-sm font-medium capitalize">{emotion.type}</h3>
@@ -324,12 +305,6 @@ const SocialAnalyzer: React.FC = () => {
                       </Card>
                     </TabsContent>
                   </Tabs>
-                </div>
-              )}
-
-              {isError && (
-                <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
-                  <p className="text-red-800">There was an error processing your request. Please try again.</p>
                 </div>
               )}
             </div>

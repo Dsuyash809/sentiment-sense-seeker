@@ -1,1 +1,6 @@
+
+# This file sets up the Supabase Edge Functions.
 project_id = "jxtinucfszrlojnwqbzo"
+
+[functions.fetch-tweets]
+verify_jwt = true
