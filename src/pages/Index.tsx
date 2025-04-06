@@ -1,6 +1,9 @@
 
 import React from "react";
+import { Link } from "react-router-dom";
 import Dashboard from "@/components/Dashboard";
+import { Button } from "@/components/ui/button";
+import { LogIn, UserPlus } from "lucide-react";
 
 const Index: React.FC = () => {
   return (
@@ -15,13 +18,29 @@ const Index: React.FC = () => {
               SentimentSense
             </h1>
           </div>
-          <div className="text-sm text-muted-foreground">
-            Social Media Sentiment Analysis Tool
+          <div className="flex items-center gap-3">
+            <div className="text-sm text-muted-foreground hidden md:block">
+              Social Media Sentiment Analysis Tool
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <Link to="/login"><LogIn className="mr-2 h-4 w-4" /> Log in</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/signup"><UserPlus className="mr-2 h-4 w-4" /> Sign up</Link>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
       
       <main className="container py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Welcome to SentimentSense</h2>
+          <Button asChild>
+            <Link to="/social-analyzer">Try Social Media Analyzer</Link>
+          </Button>
+        </div>
         <Dashboard />
       </main>
       
