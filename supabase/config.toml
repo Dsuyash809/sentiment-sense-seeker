@@ -4,3 +4,6 @@ project_id = "jxtinucfszrlojnwqbzo"
 
 [functions.fetch-tweets]
 verify_jwt = true
+
+[auth.external.google]
+enabled = true
