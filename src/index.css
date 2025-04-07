@@ -5,83 +5,83 @@
 
 @layer base {
   :root {
-    --background: 240 40% 98%;
-    --foreground: 240 10% 3.9%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 250 47% 45%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 224 82% 56%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 6% 10%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46.1%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 25% 40%;
 
-    --accent: 250 47% 90%;
-    --accent-foreground: 240 6% 10%;
+    --accent: 224 82% 90%;
+    --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 240 6% 90%;
-    --input: 240 6% 90%;
-    --ring: 250 47% 45%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 224 82% 56%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 215 25% 27%;
+    --sidebar-primary: 224 82% 56%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 40% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 32% 91%;
+    --sidebar-ring: 224 82% 56%;
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
 
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 222 47% 11%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 250 47% 60%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 224 82% 60%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 217 32% 17%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 240 4% 16%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 25% 65%;
 
-    --accent: 250 47% 25%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 224 82% 25%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 250 47% 60%;
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
+    --ring: 224 82% 60%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-background: 217 33% 17%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 224 82% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 223 47% 20%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 223 47% 20%;
+    --sidebar-ring: 224 82% 60%;
   }
 }
 
@@ -92,6 +92,7 @@
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
@@ -122,5 +123,28 @@
 
   .sentiment-badge-neutral {
     @apply bg-sentiment-neutral/20 text-sentiment-neutral;
+  }
+  
+  /* Modern card styles */
+  .card-gradient {
+    @apply bg-gradient-to-br from-card to-secondary/80 backdrop-blur-sm;
+  }
+  
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl shadow-lg;
+  }
+  
+  /* Modern button styles */
+  .btn-gradient {
+    @apply bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-all duration-300;
+  }
+  
+  /* Animation utilities */
+  .animate-slide-up {
+    @apply animate-slide-up;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
   }
 }
