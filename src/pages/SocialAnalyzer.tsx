@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { ArrowLeft, LogOut, RefreshCw, Twitter, Instagram } from "lucide-react";
+import { ArrowLeft, LogOut, RefreshCw, Twitter, Instagram, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const SocialAnalyzer: React.FC = () => {
@@ -20,7 +20,7 @@ const SocialAnalyzer: React.FC = () => {
   const [username, setUsername] = useState('');
   const { toast } = useToast();
 
-  // Modified to use our new edge function
+  // Modified to use our edge function with better error handling
   const { data, isLoading, isError, refetch, isRefetching, error } = useQuery({
     queryKey: ['socialAnalysis', platform, username],
     queryFn: async () => {
@@ -31,11 +31,15 @@ const SocialAnalyzer: React.FC = () => {
           body: { username, platform }
         });
         
-        if (error) throw new Error(error.message);
+        if (error) {
+          console.error('Function error:', error);
+          throw new Error(error.message || 'An error occurred while analyzing social media data');
+        }
+        
         return data;
       } catch (err: any) {
-        console.error('Error fetching tweets:', err);
-        throw new Error(err.message || 'Failed to fetch tweets');
+        console.error('Error fetching social data:', err);
+        throw new Error(err.message || 'Failed to analyze social media data');
       }
     },
     enabled: false,
@@ -148,7 +152,7 @@ const SocialAnalyzer: React.FC = () => {
                   </label>
                   <Input
                     id="username"
-                    placeholder={`Enter ${platform} username`}
+                    placeholder={`Enter ${platform} username (without @)`}
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                   />
@@ -171,12 +175,21 @@ const SocialAnalyzer: React.FC = () => {
                 </div>
               </div>
 
-              {/* Error message display */}
+              {/* Error message display with improved UI */}
               {isError && (
                 <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
-                  <p className="text-red-800">
-                    {error instanceof Error ? error.message : "There was an error processing your request. Please try again."}
-                  </p>
+                  <div className="flex items-start">
+                    <AlertTriangle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
+                    <div>
+                      <h3 className="text-sm font-medium text-red-800">Analysis Failed</h3>
+                      <p className="text-sm text-red-700 mt-1">
+                        {error instanceof Error ? error.message : "There was an error processing your request. Please try again."}
+                      </p>
+                      <p className="text-xs text-red-600 mt-2">
+                        Note: This is a demo application using simulated data. Real Twitter API connections are not enabled.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -195,7 +208,7 @@ const SocialAnalyzer: React.FC = () => {
                         <CardHeader>
                           <CardTitle>Overall Sentiment Analysis</CardTitle>
                           <CardDescription>
-                            Analysis of @{username}'s recent {platform === 'twitter' ? 'tweets' : 'posts'}
+                            Analysis of {username}'s recent {platform === 'twitter' ? 'tweets' : 'posts'}
                           </CardDescription>
                         </CardHeader>
                         <CardContent>

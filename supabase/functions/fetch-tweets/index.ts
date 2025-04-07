@@ -1,12 +1,5 @@
 
-import { createHmac } from "node:crypto";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-// Twitter API credentials
-const API_KEY = Deno.env.get("TWITTER_CONSUMER_KEY")?.trim();
-const API_SECRET = Deno.env.get("TWITTER_CONSUMER_SECRET")?.trim();
-const ACCESS_TOKEN = Deno.env.get("TWITTER_ACCESS_TOKEN")?.trim();
-const ACCESS_TOKEN_SECRET = Deno.env.get("TWITTER_ACCESS_TOKEN_SECRET")?.trim();
 
 // CORS headers for browser requests
 const corsHeaders = {
@@ -14,113 +7,89 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-function validateEnvironmentVariables() {
-  if (!API_KEY) {
-    throw new Error("Missing TWITTER_CONSUMER_KEY environment variable");
-  }
-  if (!API_SECRET) {
-    throw new Error("Missing TWITTER_CONSUMER_SECRET environment variable");
-  }
-  if (!ACCESS_TOKEN) {
-    throw new Error("Missing TWITTER_ACCESS_TOKEN environment variable");
-  }
-  if (!ACCESS_TOKEN_SECRET) {
-    throw new Error("Missing TWITTER_ACCESS_TOKEN_SECRET environment variable");
-  }
-}
-
-function generateOAuthSignature(
-  method: string,
-  url: string,
-  params: Record<string, string>,
-  consumerSecret: string,
-  tokenSecret: string
-): string {
-  const signatureBaseString = `${method}&${encodeURIComponent(
-    url
-  )}&${encodeURIComponent(
-    Object.entries(params)
-      .sort()
-      .map(([k, v]) => `${k}=${v}`)
-      .join("&")
-  )}`;
-  const signingKey = `${encodeURIComponent(
-    consumerSecret
-  )}&${encodeURIComponent(tokenSecret)}`;
-  const hmacSha1 = createHmac("sha1", signingKey);
-  const signature = hmacSha1.update(signatureBaseString).digest("base64");
-
-  console.log("Signature Base String:", signatureBaseString);
-  return signature;
-}
-
-function generateOAuthHeader(method: string, url: string, additionalParams: Record<string, string> = {}): string {
-  const oauthParams = {
-    oauth_consumer_key: API_KEY!,
-    oauth_nonce: Math.random().toString(36).substring(2),
-    oauth_signature_method: "HMAC-SHA1",
-    oauth_timestamp: Math.floor(Date.now() / 1000).toString(),
-    oauth_token: ACCESS_TOKEN!,
-    oauth_version: "1.0",
-    ...additionalParams
+// Mock data to simulate tweets
+function generateMockTweets(username: string, count: number = 10) {
+  const topics = ['technology', 'sports', 'politics', 'entertainment', 'business'];
+  const sentiments = ['positive', 'negative', 'neutral'];
+  const emotions = ['happiness', 'sadness', 'anger', 'fear', 'surprise'];
+  
+  // Generate random date in the past week
+  const getRandomDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * 7));
+    return date.toISOString();
   };
-
-  const signature = generateOAuthSignature(
-    method,
-    url,
-    oauthParams,
-    API_SECRET!,
-    ACCESS_TOKEN_SECRET!
-  );
-
-  const signedOAuthParams = {
-    ...oauthParams,
-    oauth_signature: signature,
+  
+  // Generate random tweet content
+  const generateTweetContent = (topic: string, sentiment: string) => {
+    const positiveWords = ['great', 'amazing', 'excellent', 'love', 'happy', 'wonderful', 'exciting'];
+    const negativeWords = ['terrible', 'awful', 'disappointed', 'hate', 'sad', 'frustrating', 'annoying'];
+    const neutralWords = ['okay', 'fine', 'average', 'standard', 'normal', 'regular'];
+    
+    let wordPool;
+    if (sentiment === 'positive') wordPool = positiveWords;
+    else if (sentiment === 'negative') wordPool = negativeWords;
+    else wordPool = neutralWords;
+    
+    const reactions = [
+      `I ${wordPool[Math.floor(Math.random() * wordPool.length)]} this new development in ${topic}!`,
+      `${topic} news today is ${wordPool[Math.floor(Math.random() * wordPool.length)]}.`,
+      `My thoughts on the latest ${topic} trends: ${wordPool[Math.floor(Math.random() * wordPool.length)]}.`,
+      `${wordPool[Math.floor(Math.random() * wordPool.length)].charAt(0).toUpperCase() + wordPool[Math.floor(Math.random() * wordPool.length)].slice(1)} experience with the new ${topic} changes.`,
+      `Just experienced the ${topic} event. It was ${wordPool[Math.floor(Math.random() * wordPool.length)]}.`
+    ];
+    
+    return reactions[Math.floor(Math.random() * reactions.length)];
   };
-
-  return (
-    "OAuth " +
-    Object.entries(signedOAuthParams)
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([k, v]) => `${encodeURIComponent(k)}="${encodeURIComponent(v)}"`)
-      .join(", ")
-  );
-}
-
-// Function to get user timeline (tweets)
-async function getUserTimeline(username: string, count: number = 10) {
-  const baseUrl = "https://api.twitter.com/1.1/statuses/user_timeline.json";
-  const url = `${baseUrl}?screen_name=${encodeURIComponent(username)}&count=${count}&tweet_mode=extended&include_rts=false`;
-  const method = "GET";
   
-  console.log(`Fetching tweets for ${username}`);
-  
-  const oauthHeader = generateOAuthHeader(method, baseUrl, {
-    screen_name: username,
-    count: count.toString(),
-    tweet_mode: "extended",
-    include_rts: "false"
-  });
-  
-  try {
-    const response = await fetch(url, {
-      method: method,
-      headers: {
-        Authorization: oauthHeader,
-      },
+  // Generate mock tweets
+  return Array.from({ length: count }, (_, i) => {
+    const topic = topics[Math.floor(Math.random() * topics.length)];
+    const sentiment = sentiments[Math.floor(Math.random() * sentiments.length)];
+    
+    // Generate sentiment-based content
+    const content = generateTweetContent(topic, sentiment);
+    
+    // Generate random emotion scores with primary emotion matching sentiment
+    let emotionScores = emotions.map(emotion => {
+      let baseScore = Math.random() * 0.5; // Base random score
+      
+      // Adjust scores based on sentiment
+      if (sentiment === 'positive' && emotion === 'happiness') {
+        baseScore += 0.3; // Boost happiness for positive tweets
+      } else if (sentiment === 'negative' && (emotion === 'sadness' || emotion === 'anger')) {
+        baseScore += 0.3; // Boost negative emotions for negative tweets
+      } else if (sentiment === 'neutral' && (emotion === 'surprise')) {
+        baseScore += 0.2; // Boost surprise for neutral tweets
+      }
+      
+      return { type: emotion, score: Math.min(baseScore, 0.95) }; // Cap at 0.95
     });
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`Twitter API error: ${response.status} - ${errorText}`);
-      throw new Error(`Twitter API error: ${response.status} - ${errorText}`);
+    // Sort emotions by score
+    emotionScores = emotionScores.sort((a, b) => b.score - a.score);
+    
+    // Calculate sentiment score (0-1 range, higher = more positive)
+    let sentimentScore;
+    if (sentiment === 'positive') {
+      sentimentScore = 0.7 + (Math.random() * 0.3); // 0.7-1.0
+    } else if (sentiment === 'negative') {
+      sentimentScore = Math.random() * 0.3; // 0.0-0.3
+    } else {
+      sentimentScore = 0.3 + (Math.random() * 0.4); // 0.3-0.7
     }
     
-    return await response.json();
-  } catch (error) {
-    console.error("Error fetching tweets:", error);
-    throw error;
-  }
+    return {
+      id_str: `mock_${Date.now()}_${i}`,
+      full_text: content,
+      text: content, // For compatibility
+      created_at: getRandomDate(),
+      user: {
+        screen_name: username,
+        name: `${username} (Mock)`
+      }
+    };
+  });
 }
 
 // Simple sentiment analysis function
@@ -178,14 +147,37 @@ function analyzeSentiment(text: string) {
   // Normalize score to 0-1 range for UI display
   const normalizedScore = (score + 1) / 2;
   
-  // Mock emotion analysis
-  const emotions = [
-    { type: 'happiness', score: Math.random() * normalizedScore + 0.2 },
-    { type: 'sadness', score: Math.random() * (1 - normalizedScore) + 0.1 },
-    { type: 'anger', score: Math.random() * (1 - normalizedScore) * 0.8 },
-    { type: 'fear', score: Math.random() * 0.5 },
-    { type: 'surprise', score: Math.random() * 0.7 }
-  ].sort((a, b) => b.score - a.score);
+  // Generate emotion analysis with primary emotion matching sentiment
+  let emotions = [];
+  
+  if (sentiment === 'positive') {
+    emotions = [
+      { type: 'happiness', score: 0.6 + Math.random() * 0.4 },
+      { type: 'surprise', score: 0.3 + Math.random() * 0.4 },
+      { type: 'sadness', score: Math.random() * 0.3 },
+      { type: 'anger', score: Math.random() * 0.2 },
+      { type: 'fear', score: Math.random() * 0.2 }
+    ];
+  } else if (sentiment === 'negative') {
+    emotions = [
+      { type: 'sadness', score: 0.5 + Math.random() * 0.5 },
+      { type: 'anger', score: 0.4 + Math.random() * 0.4 },
+      { type: 'fear', score: 0.3 + Math.random() * 0.4 },
+      { type: 'surprise', score: Math.random() * 0.4 },
+      { type: 'happiness', score: Math.random() * 0.2 }
+    ];
+  } else {
+    emotions = [
+      { type: 'surprise', score: 0.4 + Math.random() * 0.4 },
+      { type: 'happiness', score: 0.2 + Math.random() * 0.4 },
+      { type: 'sadness', score: 0.2 + Math.random() * 0.3 },
+      { type: 'fear', score: 0.1 + Math.random() * 0.3 },
+      { type: 'anger', score: 0.1 + Math.random() * 0.2 }
+    ];
+  }
+  
+  // Sort emotions by score
+  emotions = emotions.sort((a, b) => b.score - a.score);
   
   return {
     sentiment,
@@ -201,8 +193,6 @@ serve(async (req) => {
   }
   
   try {
-    validateEnvironmentVariables();
-    
     const { username, platform } = await req.json();
     
     if (!username) {
@@ -226,8 +216,10 @@ serve(async (req) => {
       );
     }
     
-    // Fetch tweets
-    const tweets = await getUserTimeline(username);
+    console.log(`Generating mock tweets for ${username}`);
+    
+    // Generate mock tweets instead of fetching real ones
+    const tweets = generateMockTweets(username, 10);
     
     // Process the tweets for sentiment analysis
     const posts = tweets.map((tweet: any) => {
@@ -271,7 +263,7 @@ serve(async (req) => {
       overallSentiment,
       emotions,
       timestamp: new Date().toISOString(),
-      rawTweets: tweets, // Include raw tweets data for reference
+      rawTweets: tweets, // Include mock tweets data for reference
     };
     
     return new Response(
