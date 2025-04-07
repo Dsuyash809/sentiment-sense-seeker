@@ -8,8 +8,9 @@ import { toast } from '@/hooks/use-toast';
 type AuthContextType = {
   session: Session | null;
   user: User | null;
+  userName: string;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
   googleSignIn: () => Promise<void>;
   loading: boolean;
@@ -20,6 +21,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [userName, setUserName] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -30,6 +32,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log('Auth state changed:', event, currentSession?.user?.email);
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
+        
+        // Set user name from metadata if available
+        if (currentSession?.user?.user_metadata?.name) {
+          setUserName(currentSession.user.user_metadata.name);
+        } else if (currentSession?.user?.email) {
+          // Use email as fallback
+          const emailName = currentSession.user.email.split('@')[0];
+          setUserName(emailName);
+        }
         
         if (event === 'SIGNED_IN') {
           // Use setTimeout to avoid potential deadlocks
@@ -61,6 +72,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         setSession(initialSession);
         setUser(initialSession?.user ?? null);
+        
+        // Set initial user name if available
+        if (initialSession?.user?.user_metadata?.name) {
+          setUserName(initialSession.user.user_metadata.name);
+        } else if (initialSession?.user?.email) {
+          const emailName = initialSession.user.email.split('@')[0];
+          setUserName(emailName);
+        }
       } catch (error) {
         console.error('Error checking auth status:', error);
       } finally {
@@ -96,20 +115,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, name: string) => {
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { error, data } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            name: name,
+          },
+          emailRedirectTo: `${window.location.origin}`,
+        },
       });
 
       if (error) throw error;
       
-      toast({
-        title: "Account created",
-        description: "Check your email for the confirmation link.",
-      });
+      // If we get here, signup was successful
+      // Let's sign in automatically
+      if (data?.user) {
+        await signIn(email, password);
+      }
     } catch (error: any) {
       toast({
         title: "Signup failed",
@@ -164,6 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     session,
     user,
+    userName,
     signIn,
     signUp,
     signOut,

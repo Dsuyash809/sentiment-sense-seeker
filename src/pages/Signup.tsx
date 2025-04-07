@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const Signup: React.FC = () => {
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const { signUp, googleSignIn, loading, user } = useAuth();
@@ -28,7 +29,7 @@ const Signup: React.FC = () => {
     }
     
     try {
-      await signUp(email, password);
+      await signUp(email, password, name);
     } catch (error) {
       console.error("Error during signup:", error);
     }
@@ -45,11 +46,24 @@ const Signup: React.FC = () => {
         <CardHeader className="space-y-1 text-center">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
           <CardDescription>
-            Enter your email and create a password to get started
+            Enter your details to get started
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Name
+              </label>
+              <Input
+                id="name"
+                type="text"
+                placeholder="Your Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+              />
+            </div>
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Email

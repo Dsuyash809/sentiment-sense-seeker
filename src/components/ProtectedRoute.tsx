@@ -8,13 +8,14 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, userName, loading } = useAuth();
 
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+      <div className="flex h-screen w-full flex-col items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent mb-4"></div>
+        {userName && <p className="text-muted-foreground">Loading your dashboard, {userName}...</p>}
       </div>
     );
   }

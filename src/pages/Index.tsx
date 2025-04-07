@@ -7,7 +7,7 @@ import { LogIn, UserPlus, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Index: React.FC = () => {
-  const { user, signOut } = useAuth();
+  const { user, userName, signOut } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
@@ -52,7 +52,9 @@ const Index: React.FC = () => {
       
       <main className="container py-6">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Welcome to SentimentSense</h2>
+          <h2 className="text-2xl font-bold">
+            {user ? `Hello, ${userName}! Welcome to SentimentSense` : "Welcome to SentimentSense"}
+          </h2>
           {user ? (
             <div className="text-sm text-muted-foreground">
               Logged in as: <span className="font-medium">{user.email}</span>
