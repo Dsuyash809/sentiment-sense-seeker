@@ -7,3 +7,7 @@ verify_jwt = true
 
 [auth.external.google]
 enabled = true
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+url = "env(GOOGLE_URL)"
+redirect_uri = "env(GOOGLE_REDIRECT)"

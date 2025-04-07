@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { FcGoogle } from "react-icons/fc";
 import { useAuth } from "@/contexts/AuthContext";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
   const { signIn, googleSignIn, loading, user } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -18,6 +20,15 @@ const Login: React.FC = () => {
       await signIn(email, password);
     } catch (error) {
       console.error("Error during login:", error);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    try {
+      await googleSignIn();
+    } catch (error) {
+      console.error("Error during Google login:", error);
+      setShowErrorDialog(true);
     }
   };
 
@@ -85,7 +96,7 @@ const Login: React.FC = () => {
             variant="outline" 
             type="button" 
             className="w-full" 
-            onClick={googleSignIn}
+            onClick={handleGoogleSignIn}
             disabled={loading}
           >
             <FcGoogle className="mr-2 h-4 w-4" />
@@ -101,6 +112,22 @@ const Login: React.FC = () => {
           </p>
         </CardFooter>
       </Card>
+
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Google Sign-In Error</DialogTitle>
+            <DialogDescription>
+              There was an error signing in with Google. This could be due to a configuration issue. Please make sure:
+              <ul className="list-disc pl-5 mt-2 space-y-1">
+                <li>Your Google OAuth credentials are properly set up</li>
+                <li>The redirect URIs in Google Cloud Console include your app's URL</li>
+                <li>Supabase authentication settings have your app's URL configured</li>
+              </ul>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
