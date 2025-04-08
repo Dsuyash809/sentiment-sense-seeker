@@ -1,14 +1,12 @@
 
-import React, { useMemo } from "react";
+import React, { useMemo, lazy, Suspense } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { TagCloud } from "lucide-react";
-import dynamic from "next/dynamic";
+import { Cloud } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
-// Use dynamic import to avoid SSR issues with react-wordcloud
-const ReactWordcloud = dynamic(
-  () => import("react-wordcloud").then((mod) => mod.default),
-  { ssr: false, loading: () => <Skeleton className="h-[300px] w-full" /> }
+// Use React's lazy loading instead of Next.js dynamic imports
+const ReactWordcloud = lazy(() => 
+  import("react-wordcloud").then(mod => ({ default: mod.default }))
 );
 
 // Common words to be excluded from the analysis
@@ -87,7 +85,7 @@ const WordCloudTab: React.FC<WordCloudTabProps> = ({ data }) => {
     <Card className="glass-morphism border-none">
       <CardHeader>
         <CardTitle className="text-xl font-semibold text-gradient flex items-center">
-          <TagCloud className="h-5 w-5 mr-2 text-primary" />
+          <Cloud className="h-5 w-5 mr-2 text-primary" />
           Word Cloud Analysis
         </CardTitle>
         <CardDescription>
@@ -97,7 +95,9 @@ const WordCloudTab: React.FC<WordCloudTabProps> = ({ data }) => {
       <CardContent>
         <div className="min-h-[300px] w-full bg-white/20 backdrop-blur-sm rounded-lg">
           {words && words.length > 0 ? (
-            <ReactWordcloud words={words} options={options} callbacks={callbacks} />
+            <Suspense fallback={<Skeleton className="h-[300px] w-full" />}>
+              <ReactWordcloud words={words} options={options} callbacks={callbacks} />
+            </Suspense>
           ) : (
             <div className="flex items-center justify-center h-[300px]">
               <p className="text-muted-foreground">Not enough data to generate a word cloud</p>

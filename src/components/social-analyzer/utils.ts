@@ -1,5 +1,6 @@
+
 import React from "react";
-import { Heart, Activity, Frown, AlertTriangle, Brain, Smile, TagCloud } from "lucide-react";
+import { Heart, Activity, Frown, AlertTriangle, Brain, Smile } from "lucide-react";
 
 export const getSentimentBadgeClass = (sentiment: string) => {
   switch (sentiment.toLowerCase()) {
