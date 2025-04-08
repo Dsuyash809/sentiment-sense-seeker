@@ -66,12 +66,12 @@ const WordCloudTab: React.FC<WordCloudTabProps> = ({ data }) => {
     enableTooltip: true,
     deterministic: true,
     fontFamily: "sans-serif",
-    fontSizes: [15, 60],
+    fontSizes: [15, 60] as [number, number], // Type assertion to explicitly define as a tuple of two numbers
     fontStyle: "normal",
     fontWeight: "normal",
     padding: 2,
     rotations: 3,
-    rotationAngles: [0, 90],
+    rotationAngles: [0, 90] as [number, number], // Type assertion for the rotation angles as well
     scale: "sqrt",
     spiral: "archimedean",
     transitionDuration: 1000
