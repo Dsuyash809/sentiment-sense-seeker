@@ -72,8 +72,8 @@ const WordCloudTab: React.FC<WordCloudTabProps> = ({ data }) => {
     padding: 2,
     rotations: 3,
     rotationAngles: [0, 90] as [number, number], // Type assertion for the rotation angles as well
-    scale: "sqrt",
-    spiral: "archimedean",
+    scale: "sqrt" as const, // Use const assertion to specify this is a literal type
+    spiral: "archimedean" as const, // Use const assertion here as well
     transitionDuration: 1000
   };
 
