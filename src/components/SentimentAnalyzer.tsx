@@ -49,7 +49,7 @@ const SentimentAnalyzer: React.FC = () => {
       </Button>
 
       {result && (
-        <Card className="mt-4 card-gradient border-0 shadow-lg animate-slide-up">
+        <Card className="mt-4 card-gradient border-0 shadow-lg custom-slide-up">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-semibold flex items-center">
               <BarChart className="mr-2 h-5 w-5 text-primary" />

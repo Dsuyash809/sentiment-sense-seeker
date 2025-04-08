@@ -140,8 +140,9 @@
   }
   
   /* Animation utilities */
-  .animate-slide-up {
-    @apply animate-slide-up;
+  /* Instead of creating circular dependency, we'll use animation properties directly */
+  .custom-slide-up {
+    animation: slide-up 0.3s ease-out;
   }
   
   .hover-scale {
