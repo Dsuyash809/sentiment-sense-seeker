@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +23,13 @@ import {
   TrendingUp,
   User,
   Share2,
-  Search
+  Search,
+  Smile,
+  Frown,
+  Meh,
+  Clock,
+  Activity,
+  Brain
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -34,7 +39,6 @@ const SocialAnalyzer: React.FC = () => {
   const [username, setUsername] = useState('');
   const { toast } = useToast();
 
-  // Modified to use our edge function with better error handling
   const { data, isLoading, isError, refetch, isRefetching, error } = useQuery({
     queryKey: ['socialAnalysis', platform, username],
     queryFn: async () => {
@@ -91,6 +95,25 @@ const SocialAnalyzer: React.FC = () => {
       case 'surprise': return 'bg-sentiment-surprise';
       case 'joy': return 'bg-sentiment-joy';
       default: return 'bg-gray-500';
+    }
+  };
+
+  const getEmotionIcon = (emotion: string) => {
+    switch (emotion.toLowerCase()) {
+      case 'joy':
+        return <Heart className="h-4 w-4 text-sentiment-joy" />;
+      case 'anger':
+        return <Activity className="h-4 w-4 text-sentiment-negative" />;
+      case 'sadness':
+        return <Frown className="h-4 w-4 text-sentiment-sadness" />;
+      case 'fear':
+        return <AlertTriangle className="h-4 w-4 text-purple-500" />;
+      case 'surprise':
+        return <Brain className="h-4 w-4 text-sentiment-surprise" />;
+      case 'happiness':
+        return <Smile className="h-4 w-4 text-sentiment-positive" />;
+      default:
+        return <Heart className="h-4 w-4 text-gray-500" />;
     }
   };
 
@@ -197,7 +220,6 @@ const SocialAnalyzer: React.FC = () => {
                 </div>
               </div>
 
-              {/* Error message display with improved UI */}
               {isError && (
                 <div className="bg-sentiment-negative/5 border border-sentiment-negative/20 rounded-xl p-4 mt-4 custom-slide-up">
                   <div className="flex items-start">
@@ -215,7 +237,6 @@ const SocialAnalyzer: React.FC = () => {
                 </div>
               )}
 
-              {/* Results section */}
               {data && (
                 <div className="mt-8 animate-fade-in">
                   <Tabs defaultValue="overview" className="w-full">
