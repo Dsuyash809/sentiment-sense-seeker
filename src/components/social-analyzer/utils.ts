@@ -26,18 +26,18 @@ export const getEmotionColor = (emotion: string) => {
 export const getEmotionIcon = (emotion: string) => {
   switch (emotion.toLowerCase()) {
     case 'joy':
-      return <Heart className="h-4 w-4 text-sentiment-joy" />;
+      return React.createElement(Heart, { className: "h-4 w-4 text-sentiment-joy" });
     case 'anger':
-      return <Activity className="h-4 w-4 text-sentiment-negative" />;
+      return React.createElement(Activity, { className: "h-4 w-4 text-sentiment-negative" });
     case 'sadness':
-      return <Frown className="h-4 w-4 text-sentiment-sadness" />;
+      return React.createElement(Frown, { className: "h-4 w-4 text-sentiment-sadness" });
     case 'fear':
-      return <AlertTriangle className="h-4 w-4 text-purple-500" />;
+      return React.createElement(AlertTriangle, { className: "h-4 w-4 text-purple-500" });
     case 'surprise':
-      return <Brain className="h-4 w-4 text-sentiment-surprise" />;
+      return React.createElement(Brain, { className: "h-4 w-4 text-sentiment-surprise" });
     case 'happiness':
-      return <Smile className="h-4 w-4 text-sentiment-positive" />;
+      return React.createElement(Smile, { className: "h-4 w-4 text-sentiment-positive" });
     default:
-      return <Heart className="h-4 w-4 text-gray-500" />;
+      return React.createElement(Heart, { className: "h-4 w-4 text-gray-500" });
   }
 };
