@@ -5,7 +5,7 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    --background: 226 100% 98%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -14,16 +14,16 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 224 82% 56%;
+    --primary: 246 83% 60%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96%;
+    --secondary: 214 32% 96%;
     --secondary-foreground: 222 47% 11%;
 
     --muted: 210 40% 96%;
     --muted-foreground: 215 25% 40%;
 
-    --accent: 224 82% 90%;
+    --accent: 246 83% 94%;
     --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84% 60%;
@@ -31,18 +31,18 @@
 
     --border: 214 32% 91%;
     --input: 214 32% 91%;
-    --ring: 224 82% 56%;
+    --ring: 246 83% 60%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 215 25% 27%;
-    --sidebar-primary: 224 82% 56%;
+    --sidebar-primary: 246 83% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 210 40% 96%;
     --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 224 82% 56%;
+    --sidebar-ring: 246 83% 60%;
   }
 
   .dark {
@@ -55,7 +55,7 @@
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 224 82% 60%;
+    --primary: 246 83% 60%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 217 32% 17%;
@@ -64,7 +64,7 @@
     --muted: 217 32% 17%;
     --muted-foreground: 215 25% 65%;
 
-    --accent: 224 82% 25%;
+    --accent: 246 83% 30%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62% 30%;
@@ -72,16 +72,16 @@
 
     --border: 217 32% 17%;
     --input: 217 32% 17%;
-    --ring: 224 82% 60%;
+    --ring: 246 83% 60%;
 
     --sidebar-background: 217 33% 17%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 224 82% 60%;
+    --sidebar-primary: 246 83% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 223 47% 20%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 223 47% 20%;
-    --sidebar-ring: 224 82% 60%;
+    --sidebar-ring: 246 83% 60%;
   }
 }
 
@@ -147,5 +147,78 @@
   
   .hover-scale {
     @apply transition-transform duration-200 hover:scale-105;
+  }
+  
+  /* New modern UI classes */
+  .glass-morphism {
+    @apply bg-white/10 backdrop-blur-lg border border-white/10 rounded-2xl shadow-lg;
+  }
+  
+  .neo-blur {
+    @apply backdrop-blur-2xl bg-black/40 border border-white/10 rounded-2xl;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-br from-primary via-primary/90 to-primary/70 bg-clip-text text-transparent;
+  }
+  
+  .shimmer-effect {
+    @apply bg-gradient-to-r from-transparent via-white/20 to-transparent bg-[length:200%_100%] animate-shimmer;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-xl hover:translate-y-[-5px];
+  }
+  
+  .btn-modern {
+    @apply px-6 py-2.5 rounded-full font-medium transition-all duration-300 flex items-center justify-center gap-2;
+  }
+  
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 btn-modern shadow-md hover:shadow-lg;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 btn-modern;
+  }
+  
+  .btn-outline {
+    @apply border border-primary/20 text-primary hover:bg-primary/10 btn-modern;
+  }
+  
+  .btn-ghost {
+    @apply text-foreground hover:bg-secondary/50 btn-modern;
+  }
+  
+  .dropdown-modern {
+    @apply bg-white/90 backdrop-blur-md rounded-xl shadow-lg border border-border/50 overflow-hidden;
+  }
+  
+  .input-modern {
+    @apply bg-white/60 backdrop-blur-sm border border-border/30 rounded-xl px-4 py-2.5 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all duration-300;
+  }
+  
+  .badge-modern {
+    @apply rounded-full px-3 py-1 text-xs font-medium flex items-center gap-1.5;
+  }
+  
+  .badge-primary {
+    @apply bg-primary/10 text-primary badge-modern;
+  }
+  
+  .badge-success {
+    @apply bg-sentiment-positive/10 text-sentiment-positive badge-modern;
+  }
+  
+  .badge-danger {
+    @apply bg-sentiment-negative/10 text-sentiment-negative badge-modern;
+  }
+  
+  .badge-warning {
+    @apply bg-sentiment-joy/10 text-sentiment-joy badge-modern;
+  }
+  
+  .badge-info {
+    @apply bg-primary/10 text-primary badge-modern;
   }
 }
