@@ -1,4 +1,3 @@
-
 // Mock data types
 export interface SentimentData {
   positive: number;
@@ -121,16 +120,81 @@ export const socialPostsData: SocialPost[] = [
   }
 ];
 
-// Mock sentiment analysis function
+// Mock sentiment analysis function with improved direct emotion recognition
 export const analyzeSentiment = (text: string): {
   sentiment: "positive" | "negative" | "neutral";
   score: number;
   emotions: { type: string; score: number }[];
 } => {
-  // Simple mock implementation
-  const lowerText = text.toLowerCase();
+  // Convert text to lowercase for case-insensitive matching
+  const lowerText = text.toLowerCase().trim();
   
-  // Very basic keyword matching for demo purposes
+  // Direct sentiment patterns to catch explicit statements
+  const directPositivePatterns = [
+    /\bi('| a)?m happy\b/i,
+    /\bi('| a)?m glad\b/i,
+    /\bi('| a)?m delighted\b/i,
+    /\bi('| a)?m pleased\b/i,
+    /\bi('| a)?m excited\b/i,
+    /\bi('| a)?m thrilled\b/i,
+    /\bi('| a)?m content\b/i,
+    /\bi('| a)?m joyful\b/i,
+    /\bhappy\b/i,
+    /\bjoy\b/i,
+    /\blove\b/i,
+    /\bgreat\b/i,
+    /\bamazing\b/i
+  ];
+  
+  const directNegativePatterns = [
+    /\bi('| a)?m sad\b/i,
+    /\bi('| a)?m unhappy\b/i,
+    /\bi('| a)?m depressed\b/i,
+    /\bi('| a)?m upset\b/i,
+    /\bi('| a)?m angry\b/i,
+    /\bi('| a)?m frustrated\b/i,
+    /\bi('| a)?m disappointed\b/i,
+    /\bi('| a)?m worried\b/i,
+    /\bsad\b/i,
+    /\bangry\b/i,
+    /\bupset\b/i,
+    /\bhate\b/i,
+    /\bterrible\b/i,
+    /\bawful\b/i
+  ];
+  
+  // Check for direct expressions of emotion first
+  let directPositive = directPositivePatterns.some(pattern => pattern.test(lowerText));
+  let directNegative = directNegativePatterns.some(pattern => pattern.test(lowerText));
+  
+  // If direct emotion is detected, override the regular analysis
+  if (directPositive && !directNegative) {
+    const score = 0.8 + (Math.random() * 0.2); // High positive score (0.8-1.0)
+    return {
+      sentiment: "positive",
+      score: score,
+      emotions: [
+        { type: "joy", score: 0.7 + (Math.random() * 0.3) },
+        { type: "surprise", score: 0.3 + (Math.random() * 0.3) },
+        { type: "sadness", score: Math.random() * 0.1 },
+        { type: "anger", score: Math.random() * 0.1 }
+      ].sort((a, b) => b.score - a.score)
+    };
+  } else if (directNegative && !directPositive) {
+    const score = Math.random() * 0.3; // Low score indicating negative (0.0-0.3)
+    return {
+      sentiment: "negative",
+      score: score,
+      emotions: [
+        { type: "sadness", score: 0.7 + (Math.random() * 0.3) },
+        { type: "anger", score: 0.4 + (Math.random() * 0.3) },
+        { type: "surprise", score: Math.random() * 0.3 },
+        { type: "joy", score: Math.random() * 0.1 }
+      ].sort((a, b) => b.score - a.score)
+    };
+  }
+  
+  // If no direct expressions or mixed signals, fall back to regular word-based analysis
   const positiveWords = ["good", "great", "excellent", "amazing", "love", "happy", "best"];
   const negativeWords = ["bad", "terrible", "awful", "hate", "worst", "disappointed", "issue", "problem"];
   
@@ -139,11 +203,15 @@ export const analyzeSentiment = (text: string): {
   
   // Count positive and negative words
   positiveWords.forEach(word => {
-    if (lowerText.includes(word)) positiveScore += 1;
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    const matches = lowerText.match(regex);
+    if (matches) positiveScore += matches.length;
   });
   
   negativeWords.forEach(word => {
-    if (lowerText.includes(word)) negativeScore += 1;
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    const matches = lowerText.match(regex);
+    if (matches) negativeScore += matches.length;
   });
   
   // Calculate overall sentiment
@@ -155,7 +223,7 @@ export const analyzeSentiment = (text: string): {
     score = 0.5 + (positiveScore / (positiveScore + negativeScore)) * 0.5;
   } else if (negativeScore > positiveScore) {
     sentiment = "negative";
-    score = 0.5 + (negativeScore / (positiveScore + negativeScore)) * 0.5;
+    score = 0.5 - (negativeScore / (positiveScore + negativeScore)) * 0.5;
   } else {
     sentiment = "neutral";
     score = 0.5;
@@ -163,10 +231,10 @@ export const analyzeSentiment = (text: string): {
   
   // Mock emotion analysis
   const emotions = [
-    { type: "Joy", score: Math.random() * (sentiment === "positive" ? 0.8 : 0.3) },
-    { type: "Anger", score: Math.random() * (sentiment === "negative" ? 0.7 : 0.2) },
-    { type: "Sadness", score: Math.random() * (sentiment === "negative" ? 0.6 : 0.2) },
-    { type: "Surprise", score: Math.random() * 0.5 }
+    { type: "joy", score: Math.random() * (sentiment === "positive" ? 0.8 : 0.3) },
+    { type: "anger", score: Math.random() * (sentiment === "negative" ? 0.7 : 0.2) },
+    { type: "sadness", score: Math.random() * (sentiment === "negative" ? 0.6 : 0.2) },
+    { type: "surprise", score: Math.random() * 0.5 }
   ].sort((a, b) => b.score - a.score);
   
   return { sentiment, score, emotions };

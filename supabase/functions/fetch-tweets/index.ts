@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 // CORS headers for browser requests
@@ -92,8 +91,64 @@ function generateMockTweets(username: string, count: number = 10) {
   });
 }
 
-// Simple sentiment analysis function
+// Improved sentiment analysis function with direct emotion recognition
 function analyzeSentiment(text: string) {
+  // Convert text to lowercase for case-insensitive matching
+  const lowerText = text.toLowerCase().trim();
+  
+  // Direct sentiment patterns to catch explicit statements
+  const directPositivePatterns = [
+    /\bi('| a)?m happy\b/i,
+    /\bi('| a)?m glad\b/i,
+    /\bi('| a)?m delighted\b/i,
+    /\bi('| a)?m excited\b/i,
+    /\bhappy\b/i,
+    /\bjoy\b/i,
+    /\blove\b/i
+  ];
+  
+  const directNegativePatterns = [
+    /\bi('| a)?m sad\b/i,
+    /\bi('| a)?m unhappy\b/i,
+    /\bi('| a)?m depressed\b/i,
+    /\bi('| a)?m upset\b/i,
+    /\bi('| a)?m angry\b/i,
+    /\bsad\b/i,
+    /\bangry\b/i,
+    /\bhate\b/i
+  ];
+  
+  // Check for direct expressions of emotion first
+  const directPositive = directPositivePatterns.some(pattern => pattern.test(lowerText));
+  const directNegative = directNegativePatterns.some(pattern => pattern.test(lowerText));
+  
+  // If direct emotion is detected, override the regular analysis
+  if (directPositive && !directNegative) {
+    return {
+      sentiment: 'positive',
+      score: 0.8 + (Math.random() * 0.2), // High positive score
+      emotions: [
+        { type: 'happiness', score: 0.8 + Math.random() * 0.2 },
+        { type: 'surprise', score: 0.3 + Math.random() * 0.3 },
+        { type: 'sadness', score: Math.random() * 0.1 },
+        { type: 'anger', score: Math.random() * 0.1 },
+        { type: 'fear', score: Math.random() * 0.1 }
+      ].sort((a, b) => b.score - a.score)
+    };
+  } else if (directNegative && !directPositive) {
+    return {
+      sentiment: 'negative',
+      score: Math.random() * 0.2, // Low score indicating negative
+      emotions: [
+        { type: 'sadness', score: 0.8 + Math.random() * 0.2 },
+        { type: 'anger', score: 0.5 + Math.random() * 0.3 },
+        { type: 'fear', score: 0.4 + Math.random() * 0.3 },
+        { type: 'surprise', score: Math.random() * 0.3 },
+        { type: 'happiness', score: Math.random() * 0.1 }
+      ].sort((a, b) => b.score - a.score)
+    };
+  }
+  
   // List of positive and negative words for simple sentiment analysis
   const positiveWords = [
     "good", "great", "awesome", "fantastic", "excellent", "amazing", 
@@ -107,9 +162,6 @@ function analyzeSentiment(text: string) {
     "fail", "sucks", "wrong", "problem", "issue", "not working"
   ];
 
-  // Convert text to lowercase for case-insensitive matching
-  const lowerText = text.toLowerCase();
-  
   // Count occurrences of positive and negative words
   let positiveCount = 0;
   let negativeCount = 0;
