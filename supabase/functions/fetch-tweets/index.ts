@@ -19,7 +19,6 @@ function validateEnvironmentVariables() {
   if (!ACCESS_TOKEN_SECRET) throw new Error("Missing TWITTER_ACCESS_TOKEN_SECRET");
 }
 
-// Proper OAuth 1.0a signature generation for Twitter API v2
 function generateOAuthSignature(
   method: string,
   url: string,
@@ -81,7 +80,6 @@ function generateOAuthHeader(method: string, url: string): string {
   );
 }
 
-// Implementing improved mock data fallback for demo purposes
 function getMockTweetsData(username: string) {
   const timestamp = new Date().toISOString();
   
@@ -131,7 +129,6 @@ function getMockTweetsData(username: string) {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -146,79 +143,62 @@ serve(async (req) => {
 
     console.log(`Fetching tweets for username: ${username}`);
 
-    try {
-      const userLookupUrl = `https://api.twitter.com/2/users/by/username/${username}`;
-      const userLookupMethod = "GET";
-      const oauthHeaderUser = generateOAuthHeader(userLookupMethod, userLookupUrl);
-      
-      console.log("OAuth Header for user lookup:", oauthHeaderUser);
-      
-      const userResponse = await fetch(userLookupUrl, {
-        method: userLookupMethod,
-        headers: {
-          'Authorization': oauthHeaderUser,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      const userResponseText = await userResponse.text();
-      console.log(`User lookup response (${userResponse.status}):`, userResponseText);
-      
-      if (!userResponse.ok) {
-        console.log("Twitter API returned non-OK response, falling back to mock data");
-        const mockData = getMockTweetsData(username);
-        return new Response(JSON.stringify(mockData), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      
-      const userData = JSON.parse(userResponseText);
-      const userId = userData.data.id;
-      
-      const tweetsUrl = `https://api.twitter.com/2/users/${userId}/tweets?max_results=10&tweet.fields=created_at&expansions=author_id&user.fields=name,username,profile_image_url`;
-      const tweetsMethod = "GET";
-      const oauthHeaderTweets = generateOAuthHeader(tweetsMethod, tweetsUrl);
-      
-      console.log("OAuth Header for tweets lookup:", oauthHeaderTweets);
-      
-      const tweetsResponse = await fetch(tweetsUrl, {
-        method: tweetsMethod,
-        headers: {
-          'Authorization': oauthHeaderTweets,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      const tweetsResponseText = await tweetsResponse.text();
-      console.log(`Tweets lookup response (${tweetsResponse.status}):`, tweetsResponseText);
-      
-      if (!tweetsResponse.ok) {
-        console.log("Twitter API returned non-OK response for tweets, falling back to mock data");
-        const mockData = getMockTweetsData(username);
-        return new Response(JSON.stringify(mockData), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-      
-      const tweetsData = JSON.parse(tweetsResponseText);
-      
-      return new Response(JSON.stringify(tweetsData), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    } catch (apiError: any) {
-      console.error('Twitter API Error:', apiError);
-      
-      console.log('Falling back to mock data...');
-      const mockData = getMockTweetsData(username);
-      
-      return new Response(JSON.stringify(mockData), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    const userLookupUrl = `https://api.twitter.com/2/users/by/username/${username}`;
+    const userLookupMethod = "GET";
+    const oauthHeaderUser = generateOAuthHeader(userLookupMethod, userLookupUrl);
+    
+    console.log("Fetching user data...");
+    const userResponse = await fetch(userLookupUrl, {
+      method: userLookupMethod,
+      headers: {
+        'Authorization': oauthHeaderUser,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    const userResponseText = await userResponse.text();
+    console.log(`User lookup response (${userResponse.status}):`, userResponseText);
+    
+    if (!userResponse.ok) {
+      throw new Error(`Failed to fetch user data: ${userResponse.status} - ${userResponseText}`);
     }
+    
+    const userData = JSON.parse(userResponseText);
+    const userId = userData.data.id;
+    
+    const tweetsUrl = `https://api.twitter.com/2/users/${userId}/tweets?max_results=10&tweet.fields=created_at&expansions=author_id&user.fields=name,username,profile_image_url`;
+    const tweetsMethod = "GET";
+    const oauthHeaderTweets = generateOAuthHeader(tweetsMethod, tweetsUrl);
+    
+    console.log("Fetching tweets...");
+    const tweetsResponse = await fetch(tweetsUrl, {
+      method: tweetsMethod,
+      headers: {
+        'Authorization': oauthHeaderTweets,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    const tweetsResponseText = await tweetsResponse.text();
+    console.log(`Tweets lookup response (${tweetsResponse.status}):`, tweetsResponseText);
+    
+    if (!tweetsResponse.ok) {
+      throw new Error(`Failed to fetch tweets: ${tweetsResponse.status} - ${tweetsResponseText}`);
+    }
+    
+    const tweetsData = JSON.parse(tweetsResponseText);
+    
+    return new Response(JSON.stringify(tweetsData), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
   } catch (error: any) {
     console.error('Error in fetch-tweets function:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Failed to fetch tweets' }), 
+      JSON.stringify({ 
+        error: error.message || 'Failed to fetch tweets',
+        message: 'Unable to fetch real tweets. Please check the username and try again.'
+      }), 
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

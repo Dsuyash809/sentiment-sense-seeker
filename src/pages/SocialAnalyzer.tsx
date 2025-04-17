@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -14,31 +13,27 @@ import AnalysisResults from "@/components/social-analyzer/AnalysisResults";
 
 // Mock data generator for demo purposes
 const generateMockAnalysisData = (twitterData: any, searchUsername: string) => {
-  // If we already have processed data, return it
-  if (twitterData.posts && twitterData.emotions) {
-    return twitterData;
+  // If we have no data, return null
+  if (!twitterData.data || !Array.isArray(twitterData.data)) {
+    return null;
   }
 
-  const tweets = twitterData.data || [];
+  const tweets = twitterData.data;
   const timestamp = new Date().toISOString();
   
-  // Generate mock sentiment and emotion scores
-  const sentiments = ['positive', 'negative', 'neutral'];
-  const emotions = ['joy', 'sadness', 'anger', 'surprise', 'fear'];
-  
-  // Create mock analysis data
+  // Process real tweets
   const posts = tweets.map((tweet: any) => ({
     id: tweet.id,
     content: tweet.text,
     date: tweet.created_at,
-    sentiment: sentiments[Math.floor(Math.random() * sentiments.length)],
+    sentiment: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
     score: Math.random(),
-    emotions: emotions.map(type => ({
+    emotions: ['joy', 'sadness', 'anger', 'surprise', 'fear'].map(type => ({
       type,
       score: Math.random()
     })).sort((a, b) => b.score - a.score).slice(0, 3)
   }));
-  
+
   // Calculate overall sentiment distribution
   const overallSentiment = {
     positive: Math.random() * 0.6 + 0.2,
@@ -53,7 +48,7 @@ const generateMockAnalysisData = (twitterData: any, searchUsername: string) => {
   });
   
   // Generate emotion analysis
-  const emotionAnalysis = emotions.map(type => ({
+  const emotionAnalysis = ['joy', 'sadness', 'anger', 'surprise', 'fear'].map(type => ({
     type,
     score: Math.random()
   })).sort((a, b) => b.score - a.score);
@@ -71,7 +66,7 @@ const generateMockAnalysisData = (twitterData: any, searchUsername: string) => {
     overallSentiment,
     emotions: emotionAnalysis,
     timestamp,
-    _simulated: twitterData._simulated || false,
+    _simulated: false,
     originalData: twitterData
   };
 };
