@@ -15,35 +15,57 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Types
+interface TwitterUser {
+  id: string;
+  username: string;
+  name: string;
+  profile_image_url?: string;
+}
+
+interface TwitterResponse {
+  data: any[];
+  includes?: {
+    users: TwitterUser[];
+  };
+  meta?: {
+    result_count: number;
+    newest_id: string;
+    oldest_id: string;
+    next_token?: string;
+  };
+}
+
 // Validation functions
 function validateEnvironmentVariables() {
-  if (!API_KEY) throw new Error("Missing TWITTER_CONSUMER_KEY");
-  if (!API_SECRET) throw new Error("Missing TWITTER_CONSUMER_SECRET");
-  if (!ACCESS_TOKEN) throw new Error("Missing TWITTER_ACCESS_TOKEN");
-  if (!ACCESS_TOKEN_SECRET) throw new Error("Missing TWITTER_ACCESS_TOKEN_SECRET");
+  const requiredVars = {
+    TWITTER_CONSUMER_KEY: API_KEY,
+    TWITTER_CONSUMER_SECRET: API_SECRET,
+    TWITTER_ACCESS_TOKEN: ACCESS_TOKEN,
+    TWITTER_ACCESS_TOKEN_SECRET: ACCESS_TOKEN_SECRET,
+  };
+
+  for (const [name, value] of Object.entries(requiredVars)) {
+    if (!value) throw new Error(`Missing ${name}`);
+  }
 }
 
 // OAuth signature generation
-function generateOAuthSignature(
+function generateSignature(
   method: string,
   url: string,
   params: Record<string, string>,
   consumerSecret: string,
   tokenSecret: string
 ): string {
-  const signatureBaseString = `${method}&${encodeURIComponent(
-    url
-  )}&${encodeURIComponent(
+  const signatureBaseString = `${method}&${encodeURIComponent(url)}&${encodeURIComponent(
     Object.entries(params)
       .sort()
       .map(([k, v]) => `${k}=${v}`)
       .join("&")
   )}`;
   
-  const signingKey = `${encodeURIComponent(
-    consumerSecret
-  )}&${encodeURIComponent(tokenSecret)}`;
-  
+  const signingKey = `${encodeURIComponent(consumerSecret)}&${encodeURIComponent(tokenSecret)}`;
   const hmacSha1 = createHmac("sha1", signingKey);
   return hmacSha1.update(signatureBaseString).digest("base64");
 }
@@ -59,7 +81,7 @@ function generateOAuthHeader(method: string, url: string): string {
     oauth_version: "1.0",
   };
 
-  const signature = generateOAuthSignature(
+  const signature = generateSignature(
     method,
     url,
     oauthParams,
@@ -82,47 +104,53 @@ function generateOAuthHeader(method: string, url: string): string {
 }
 
 // Twitter API calls
-async function fetchTwitterUser(username: string) {
+async function makeTwitterRequest(url: string, method: string) {
+  const oauthHeader = generateOAuthHeader(method, url);
+  console.log(`Making ${method} request to: ${url}`);
+  
+  const response = await fetch(url, {
+    method,
+    headers: {
+      Authorization: oauthHeader,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`Twitter API Error (${response.status}):`, errorText);
+    throw new Error(`Twitter API error: ${response.status} - ${errorText}`);
+  }
+
+  return response.json();
+}
+
+async function fetchTwitterUser(username: string): Promise<TwitterUser> {
   const url = `${BASE_URL}/users/by/username/${username}`;
-  const method = "GET";
-  const oauthHeader = generateOAuthHeader(method, url);
+  console.log(`Fetching user data for: ${username}`);
   
-  const response = await fetch(url, {
-    method,
-    headers: {
-      Authorization: oauthHeader,
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch user data: ${response.status}`);
-  }
-
-  return response.json();
+  const userData = await makeTwitterRequest(url, "GET");
+  console.log('User data fetched:', userData);
+  
+  return userData.data;
 }
 
-async function fetchUserTweets(userId: string) {
+async function fetchUserTweets(userId: string): Promise<TwitterResponse> {
   const url = `${BASE_URL}/users/${userId}/tweets?max_results=10&tweet.fields=created_at&expansions=author_id&user.fields=name,username,profile_image_url`;
-  const method = "GET";
-  const oauthHeader = generateOAuthHeader(method, url);
+  console.log(`Fetching tweets for user ID: ${userId}`);
   
-  const response = await fetch(url, {
-    method,
-    headers: {
-      Authorization: oauthHeader,
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch tweets: ${response.status}`);
-  }
-
-  return response.json();
+  const tweetsData = await makeTwitterRequest(url, "GET");
+  console.log('Tweets fetched:', tweetsData);
+  
+  return tweetsData;
 }
 
-// Request handler
+// Request handling
+async function handleTwitterRequest(username: string): Promise<TwitterResponse> {
+  const user = await fetchTwitterUser(username);
+  return await fetchUserTweets(user.id);
+}
+
 async function handleRequest(req: Request) {
   try {
     validateEnvironmentVariables();
@@ -132,15 +160,10 @@ async function handleRequest(req: Request) {
       throw new Error("Username is required");
     }
 
-    console.log(`Fetching data for username: ${username}`);
+    console.log(`Processing request for username: ${username}`);
+    const twitterData = await handleTwitterRequest(username);
     
-    const userData = await fetchTwitterUser(username);
-    console.log('User data fetched successfully');
-    
-    const tweets = await fetchUserTweets(userData.data.id);
-    console.log('Tweets fetched successfully');
-
-    return new Response(JSON.stringify(tweets), {
+    return new Response(JSON.stringify(twitterData), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
@@ -166,4 +189,3 @@ serve(async (req) => {
   }
   return handleRequest(req);
 });
-
