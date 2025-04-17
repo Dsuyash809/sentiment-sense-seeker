@@ -3,7 +3,7 @@ import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, Twitter, Instagram } from "lucide-react";
+import { RefreshCw, Search, Twitter } from "lucide-react";
 
 interface SearchFormProps {
   platform: 'twitter' | 'instagram';
@@ -24,8 +24,13 @@ const SearchForm: React.FC<SearchFormProps> = ({
   isLoading,
   isRefetching
 }) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleAnalyze();
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div className="md:col-span-1">
         <label htmlFor="platform" className="text-sm font-medium mb-2 block text-muted-foreground">
           Platform
@@ -41,7 +46,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
             <SelectItem value="twitter">
               <div className="flex items-center gap-2">
                 <Twitter className="h-4 w-4 text-blue-400" />
-                Twitter
+                Twitter/X
               </div>
             </SelectItem>
             <SelectItem value="instagram" disabled>
@@ -59,15 +64,15 @@ const SearchForm: React.FC<SearchFormProps> = ({
         </label>
         <Input
           id="username"
-          placeholder={`Enter ${platform} username (without @)`}
+          placeholder="Enter Twitter handle (without @)"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => setUsername(e.target.value.replace('@', ''))}
           className="input-modern"
         />
       </div>
       <div className="md:col-span-1 flex items-end">
         <Button 
-          onClick={handleAnalyze} 
+          type="submit"
           className="w-full btn-primary" 
           disabled={isLoading || isRefetching || !username.trim()}
         >
@@ -84,7 +89,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
           )}
         </Button>
       </div>
-    </div>
+    </form>
   );
 };
 
