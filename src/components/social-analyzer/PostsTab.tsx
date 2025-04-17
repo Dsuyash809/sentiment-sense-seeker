@@ -39,7 +39,7 @@ const PostsTab: React.FC<PostsTabProps> = ({ data, getSentimentBadgeClass }) => 
                   Posted on {new Date(post.date).toLocaleDateString()}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {post.emotions.slice(0, 3).map((emotion: any) => (
+                  {post.emotions && post.emotions.slice(0, 3).map((emotion: any) => (
                     <Badge 
                       key={emotion.type} 
                       variant="outline" 

@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
@@ -82,16 +81,36 @@ function generateOAuthHeader(method: string, url: string): string {
   );
 }
 
-// Implementing mock data fallback for demo purposes
+// Implementing improved mock data fallback for demo purposes
 function getMockTweetsData(username: string) {
   const timestamp = new Date().toISOString();
   
+  const tweetTemplates = [
+    `Just watched an amazing match! The team played really well today. #sports #highlights`,
+    `Can't believe we won the championship! What a game! #champions #celebration`,
+    `Training session today was intense but productive. Getting ready for the next match! #training #fitness`,
+    `Thoughts on the trade rumors? I think we need to strengthen our defense. #sportsnews #analysis`,
+    
+    `Just released a new version of our app with some exciting features! Check it out. #tech #release`,
+    `The new AI tools are amazing for productivity. Changed my workflow completely. #AI #technology`,
+    `Working on an exciting new project. Can't wait to share more details soon! #coding #development`,
+    `This conference is incredible. Learning so much from industry experts. #techconference #learning`,
+    
+    `Just watched the latest movie. Absolutely loved it! Highly recommend. #movie #review`,
+    `The concert last night was amazing! The energy was incredible. #music #liveperformance`,
+    `Reading this new book and can't put it down. Such a great story! #books #reading`,
+    `New episode of my favorite show tonight! So excited! #TV #entertainment`
+  ];
+  
   return {
-    data: Array.from({ length: 5 }, (_, i) => ({
-      id: `mock-${i}-${Date.now()}`,
-      text: `This is a simulated tweet #${i + 1} from ${username}. Generated at ${timestamp}. #demo #simulation`,
-      created_at: new Date(Date.now() - i * 3600000).toISOString(),
-    })),
+    data: Array.from({ length: 5 }, (_, i) => {
+      const randomTemplate = tweetTemplates[Math.floor(Math.random() * tweetTemplates.length)];
+      return {
+        id: `mock-${i}-${Date.now()}`,
+        text: randomTemplate,
+        created_at: new Date(Date.now() - i * 3600000).toISOString(),
+      };
+    }),
     meta: {
       result_count: 5,
       newest_id: "mock-0",
@@ -103,6 +122,7 @@ function getMockTweetsData(username: string) {
           id: "mock-user-id",
           name: username,
           username: username,
+          profile_image_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`
         }
       ]
     },
@@ -127,7 +147,6 @@ serve(async (req) => {
     console.log(`Fetching tweets for username: ${username}`);
 
     try {
-      // Try to fetch actual Twitter data with proper error handling
       const userLookupUrl = `https://api.twitter.com/2/users/by/username/${username}`;
       const userLookupMethod = "GET";
       const oauthHeaderUser = generateOAuthHeader(userLookupMethod, userLookupUrl);
@@ -156,7 +175,6 @@ serve(async (req) => {
       const userData = JSON.parse(userResponseText);
       const userId = userData.data.id;
       
-      // Twitter API v2 endpoint for tweets lookup
       const tweetsUrl = `https://api.twitter.com/2/users/${userId}/tweets?max_results=10&tweet.fields=created_at&expansions=author_id&user.fields=name,username,profile_image_url`;
       const tweetsMethod = "GET";
       const oauthHeaderTweets = generateOAuthHeader(tweetsMethod, tweetsUrl);
@@ -190,7 +208,6 @@ serve(async (req) => {
     } catch (apiError: any) {
       console.error('Twitter API Error:', apiError);
       
-      // Fallback to mock data for demo purposes
       console.log('Falling back to mock data...');
       const mockData = getMockTweetsData(username);
       
