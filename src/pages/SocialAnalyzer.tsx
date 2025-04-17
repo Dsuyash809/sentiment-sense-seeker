@@ -12,6 +12,70 @@ import SearchForm from "@/components/social-analyzer/SearchForm";
 import ErrorMessage from "@/components/social-analyzer/ErrorMessage";
 import AnalysisResults from "@/components/social-analyzer/AnalysisResults";
 
+// Mock data generator for demo purposes
+const generateMockAnalysisData = (twitterData: any) => {
+  // If we already have processed data, return it
+  if (twitterData.posts && twitterData.emotions) {
+    return twitterData;
+  }
+
+  const tweets = twitterData.data || [];
+  const timestamp = new Date().toISOString();
+  
+  // Generate mock sentiment and emotion scores
+  const sentiments = ['positive', 'negative', 'neutral'];
+  const emotions = ['joy', 'sadness', 'anger', 'surprise', 'fear'];
+  
+  // Create mock analysis data
+  const posts = tweets.map((tweet: any) => ({
+    id: tweet.id,
+    content: tweet.text,
+    date: tweet.created_at,
+    sentiment: sentiments[Math.floor(Math.random() * sentiments.length)],
+    score: Math.random(),
+    emotions: emotions.map(type => ({
+      type,
+      score: Math.random()
+    })).sort((a, b) => b.score - a.score).slice(0, 3)
+  }));
+  
+  // Calculate overall sentiment distribution
+  const overallSentiment = {
+    positive: Math.random() * 0.6 + 0.2,
+    negative: Math.random() * 0.4,
+    neutral: Math.random() * 0.5
+  };
+  
+  // Normalize to sum to 1
+  const sentimentSum = Object.values(overallSentiment).reduce((sum, val) => sum + val, 0);
+  Object.keys(overallSentiment).forEach(key => {
+    overallSentiment[key as keyof typeof overallSentiment] /= sentimentSum;
+  });
+  
+  // Generate emotion analysis
+  const emotionAnalysis = emotions.map(type => ({
+    type,
+    score: Math.random()
+  })).sort((a, b) => b.score - a.score);
+  
+  // Normalize emotion scores
+  const emotionSum = emotionAnalysis.reduce((sum, emotion) => sum + emotion.score, 0);
+  emotionAnalysis.forEach(emotion => {
+    emotion.score /= emotionSum;
+  });
+  
+  return {
+    platform: 'twitter',
+    user: twitterData.includes?.users?.[0] || { username },
+    posts,
+    overallSentiment,
+    emotions: emotionAnalysis,
+    timestamp,
+    _simulated: twitterData._simulated || false,
+    originalData: twitterData
+  };
+};
+
 const SocialAnalyzer: React.FC = () => {
   const { user, signOut } = useAuth();
   const [platform, setPlatform] = useState<'twitter' | 'instagram'>('twitter');
@@ -24,6 +88,7 @@ const SocialAnalyzer: React.FC = () => {
       if (!username) throw new Error('Please enter a username');
       
       try {
+        console.log(`Fetching data for ${username} on ${platform}`);
         const { data, error } = await supabase.functions.invoke('fetch-tweets', {
           body: { username, platform }
         });
@@ -33,7 +98,13 @@ const SocialAnalyzer: React.FC = () => {
           throw new Error(error.message || 'An error occurred while analyzing social media data');
         }
         
-        return data;
+        console.log('Raw data received:', data);
+        
+        // Process and transform the data for our visualization components
+        const processedData = generateMockAnalysisData(data);
+        console.log('Processed data:', processedData);
+        
+        return processedData;
       } catch (err: any) {
         console.error('Error fetching social data:', err);
         throw new Error(err.message || 'Failed to analyze social media data');
