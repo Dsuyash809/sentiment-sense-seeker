@@ -3,7 +3,7 @@ import React from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, Twitter } from "lucide-react";
+import { RefreshCw, Search, Twitter, Image } from "lucide-react";
 
 interface SearchFormProps {
   platform: 'twitter' | 'instagram';
@@ -51,7 +51,7 @@ const SearchForm: React.FC<SearchFormProps> = ({
             </SelectItem>
             <SelectItem value="instagram" disabled>
               <div className="flex items-center gap-2">
-                <Instagram className="h-4 w-4 text-pink-500" />
+                <Image className="h-4 w-4 text-pink-500" />
                 Instagram (Coming soon)
               </div>
             </SelectItem>
