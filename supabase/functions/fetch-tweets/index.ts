@@ -1,7 +1,10 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createHmac } from "https://deno.land/std@0.168.0/node/crypto.ts";
 
+// Configuration and constants
+const BASE_URL = "https://api.x.com/2";
 const API_KEY = Deno.env.get("TWITTER_CONSUMER_KEY")?.trim();
 const API_SECRET = Deno.env.get("TWITTER_CONSUMER_SECRET")?.trim();
 const ACCESS_TOKEN = Deno.env.get("TWITTER_ACCESS_TOKEN")?.trim();
@@ -12,6 +15,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Validation functions
 function validateEnvironmentVariables() {
   if (!API_KEY) throw new Error("Missing TWITTER_CONSUMER_KEY");
   if (!API_SECRET) throw new Error("Missing TWITTER_CONSUMER_SECRET");
@@ -19,6 +23,7 @@ function validateEnvironmentVariables() {
   if (!ACCESS_TOKEN_SECRET) throw new Error("Missing TWITTER_ACCESS_TOKEN_SECRET");
 }
 
+// OAuth signature generation
 function generateOAuthSignature(
   method: string,
   url: string,
@@ -40,14 +45,10 @@ function generateOAuthSignature(
   )}&${encodeURIComponent(tokenSecret)}`;
   
   const hmacSha1 = createHmac("sha1", signingKey);
-  const signature = hmacSha1.update(signatureBaseString).digest("base64");
-  
-  console.log("Signature Base String:", signatureBaseString);
-  console.log("Generated Signature:", signature);
-  
-  return signature;
+  return hmacSha1.update(signatureBaseString).digest("base64");
 }
 
+// OAuth header generation
 function generateOAuthHeader(method: string, url: string): string {
   const oauthParams = {
     oauth_consumer_key: API_KEY!,
@@ -80,59 +81,49 @@ function generateOAuthHeader(method: string, url: string): string {
   );
 }
 
-function getMockTweetsData(username: string) {
-  const timestamp = new Date().toISOString();
+// Twitter API calls
+async function fetchTwitterUser(username: string) {
+  const url = `${BASE_URL}/users/by/username/${username}`;
+  const method = "GET";
+  const oauthHeader = generateOAuthHeader(method, url);
   
-  const tweetTemplates = [
-    `Just watched an amazing match! The team played really well today. #sports #highlights`,
-    `Can't believe we won the championship! What a game! #champions #celebration`,
-    `Training session today was intense but productive. Getting ready for the next match! #training #fitness`,
-    `Thoughts on the trade rumors? I think we need to strengthen our defense. #sportsnews #analysis`,
-    
-    `Just released a new version of our app with some exciting features! Check it out. #tech #release`,
-    `The new AI tools are amazing for productivity. Changed my workflow completely. #AI #technology`,
-    `Working on an exciting new project. Can't wait to share more details soon! #coding #development`,
-    `This conference is incredible. Learning so much from industry experts. #techconference #learning`,
-    
-    `Just watched the latest movie. Absolutely loved it! Highly recommend. #movie #review`,
-    `The concert last night was amazing! The energy was incredible. #music #liveperformance`,
-    `Reading this new book and can't put it down. Such a great story! #books #reading`,
-    `New episode of my favorite show tonight! So excited! #TV #entertainment`
-  ];
-  
-  return {
-    data: Array.from({ length: 5 }, (_, i) => {
-      const randomTemplate = tweetTemplates[Math.floor(Math.random() * tweetTemplates.length)];
-      return {
-        id: `mock-${i}-${Date.now()}`,
-        text: randomTemplate,
-        created_at: new Date(Date.now() - i * 3600000).toISOString(),
-      };
-    }),
-    meta: {
-      result_count: 5,
-      newest_id: "mock-0",
-      oldest_id: "mock-4",
+  const response = await fetch(url, {
+    method,
+    headers: {
+      Authorization: oauthHeader,
+      "Content-Type": "application/json",
     },
-    includes: {
-      users: [
-        {
-          id: "mock-user-id",
-          name: username,
-          username: username,
-          profile_image_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=random`
-        }
-      ]
-    },
-    _simulated: true
-  };
-}
+  });
 
-serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user data: ${response.status}`);
   }
 
+  return response.json();
+}
+
+async function fetchUserTweets(userId: string) {
+  const url = `${BASE_URL}/users/${userId}/tweets?max_results=10&tweet.fields=created_at&expansions=author_id&user.fields=name,username,profile_image_url`;
+  const method = "GET";
+  const oauthHeader = generateOAuthHeader(method, url);
+  
+  const response = await fetch(url, {
+    method,
+    headers: {
+      Authorization: oauthHeader,
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch tweets: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+// Request handler
+async function handleRequest(req: Request) {
   try {
     validateEnvironmentVariables();
     
@@ -141,68 +132,38 @@ serve(async (req) => {
       throw new Error("Username is required");
     }
 
-    console.log(`Fetching tweets for username: ${username}`);
+    console.log(`Fetching data for username: ${username}`);
+    
+    const userData = await fetchTwitterUser(username);
+    console.log('User data fetched successfully');
+    
+    const tweets = await fetchUserTweets(userData.data.id);
+    console.log('Tweets fetched successfully');
 
-    const userLookupUrl = `https://api.twitter.com/2/users/by/username/${username}`;
-    const userLookupMethod = "GET";
-    const oauthHeaderUser = generateOAuthHeader(userLookupMethod, userLookupUrl);
-    
-    console.log("Fetching user data...");
-    const userResponse = await fetch(userLookupUrl, {
-      method: userLookupMethod,
-      headers: {
-        'Authorization': oauthHeaderUser,
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    const userResponseText = await userResponse.text();
-    console.log(`User lookup response (${userResponse.status}):`, userResponseText);
-    
-    if (!userResponse.ok) {
-      throw new Error(`Failed to fetch user data: ${userResponse.status} - ${userResponseText}`);
-    }
-    
-    const userData = JSON.parse(userResponseText);
-    const userId = userData.data.id;
-    
-    const tweetsUrl = `https://api.twitter.com/2/users/${userId}/tweets?max_results=10&tweet.fields=created_at&expansions=author_id&user.fields=name,username,profile_image_url`;
-    const tweetsMethod = "GET";
-    const oauthHeaderTweets = generateOAuthHeader(tweetsMethod, tweetsUrl);
-    
-    console.log("Fetching tweets...");
-    const tweetsResponse = await fetch(tweetsUrl, {
-      method: tweetsMethod,
-      headers: {
-        'Authorization': oauthHeaderTweets,
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    const tweetsResponseText = await tweetsResponse.text();
-    console.log(`Tweets lookup response (${tweetsResponse.status}):`, tweetsResponseText);
-    
-    if (!tweetsResponse.ok) {
-      throw new Error(`Failed to fetch tweets: ${tweetsResponse.status} - ${tweetsResponseText}`);
-    }
-    
-    const tweetsData = JSON.parse(tweetsResponseText);
-    
-    return new Response(JSON.stringify(tweetsData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return new Response(JSON.stringify(tweets), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 
   } catch (error: any) {
-    console.error('Error in fetch-tweets function:', error);
+    console.error("Error processing request:", error);
     return new Response(
       JSON.stringify({ 
-        error: error.message || 'Failed to fetch tweets',
-        message: 'Unable to fetch real tweets. Please check the username and try again.'
-      }), 
+        error: error.message,
+        message: "Failed to fetch Twitter data. Please try again." 
+      }),
       { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
   }
+}
+
+// Main server
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+  return handleRequest(req);
 });
+
