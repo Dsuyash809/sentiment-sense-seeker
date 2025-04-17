@@ -13,7 +13,7 @@ import ErrorMessage from "@/components/social-analyzer/ErrorMessage";
 import AnalysisResults from "@/components/social-analyzer/AnalysisResults";
 
 // Mock data generator for demo purposes
-const generateMockAnalysisData = (twitterData: any) => {
+const generateMockAnalysisData = (twitterData: any, searchUsername: string) => {
   // If we already have processed data, return it
   if (twitterData.posts && twitterData.emotions) {
     return twitterData;
@@ -66,7 +66,7 @@ const generateMockAnalysisData = (twitterData: any) => {
   
   return {
     platform: 'twitter',
-    user: twitterData.includes?.users?.[0] || { username },
+    user: twitterData.includes?.users?.[0] || { username: searchUsername },
     posts,
     overallSentiment,
     emotions: emotionAnalysis,
@@ -101,7 +101,7 @@ const SocialAnalyzer: React.FC = () => {
         console.log('Raw data received:', data);
         
         // Process and transform the data for our visualization components
-        const processedData = generateMockAnalysisData(data);
+        const processedData = generateMockAnalysisData(data, username);
         console.log('Processed data:', processedData);
         
         return processedData;
