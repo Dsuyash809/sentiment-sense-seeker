@@ -2,16 +2,57 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
+// Define interfaces for type safety
+interface SentimentDistribution {
+  positive: number;
+  negative: number;
+  neutral: number;
+}
+
+interface Emotion {
+  type: string;
+  score: number;
+}
+
+interface Post {
+  id: string;
+  content: string;
+  date: string;
+  sentiment: string;
+  score: number;
+  emotions: Emotion[];
+}
+
+interface User {
+  username: string;
+  name: string;
+  profile_image_url: string;
+}
+
+interface SimulatedData {
+  platform: string;
+  user: User;
+  posts: Post[];
+  overallSentiment: SentimentDistribution;
+  emotions: Emotion[];
+  timestamp: string;
+  _simulated: boolean;
+}
+
+// CORS Headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-function generateSimulatedData(username: string) {
+/**
+ * Generates realistic simulated data for a given username
+ */
+function generateSimulatedData(username: string): SimulatedData {
   console.log("Generating simulated data for:", username);
   
   // Create mock posts with realistic content
-  const mockPosts = Array.from({ length: 5 }, (_, i) => ({
+  const mockPosts: Post[] = Array.from({ length: 5 }, (_, i) => ({
     id: `sim-${i}-${Date.now()}`,
     content: [
       `Just watched an amazing game! Can't believe the score! #SportsFan`,
@@ -30,7 +71,7 @@ function generateSimulatedData(username: string) {
   }));
   
   // Calculate simulated sentiment distribution
-  const overallSentiment = {
+  const overallSentiment: SentimentDistribution = {
     positive: Math.random() * 0.6 + 0.2,
     negative: Math.random() * 0.4,
     neutral: Math.random() * 0.5
@@ -43,7 +84,7 @@ function generateSimulatedData(username: string) {
   });
   
   // Generate emotion analysis
-  const emotionAnalysis = ['joy', 'sadness', 'anger', 'surprise', 'fear'].map(type => ({
+  const emotionAnalysis: Emotion[] = ['joy', 'sadness', 'anger', 'surprise', 'fear'].map(type => ({
     type,
     score: Math.random()
   })).sort((a, b) => b.score - a.score);
@@ -69,6 +110,9 @@ function generateSimulatedData(username: string) {
   };
 }
 
+/**
+ * Handles the incoming request
+ */
 async function handleRequest(req: Request) {
   try {
     const { username } = await req.json();
@@ -97,6 +141,7 @@ async function handleRequest(req: Request) {
 
 // Main server
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }

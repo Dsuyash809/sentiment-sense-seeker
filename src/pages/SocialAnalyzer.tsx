@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -10,66 +11,6 @@ import AnalyzerHeader from "@/components/social-analyzer/AnalyzerHeader";
 import SearchForm from "@/components/social-analyzer/SearchForm";
 import ErrorMessage from "@/components/social-analyzer/ErrorMessage";
 import AnalysisResults from "@/components/social-analyzer/AnalysisResults";
-
-// Mock data generator for demo purposes
-const generateMockAnalysisData = (twitterData: any, searchUsername: string) => {
-  // If we have no data, return null
-  if (!twitterData.data || !Array.isArray(twitterData.data)) {
-    return null;
-  }
-
-  const tweets = twitterData.data;
-  const timestamp = new Date().toISOString();
-  
-  // Process real tweets
-  const posts = tweets.map((tweet: any) => ({
-    id: tweet.id,
-    content: tweet.text,
-    date: tweet.created_at,
-    sentiment: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
-    score: Math.random(),
-    emotions: ['joy', 'sadness', 'anger', 'surprise', 'fear'].map(type => ({
-      type,
-      score: Math.random()
-    })).sort((a, b) => b.score - a.score).slice(0, 3)
-  }));
-
-  // Calculate overall sentiment distribution
-  const overallSentiment = {
-    positive: Math.random() * 0.6 + 0.2,
-    negative: Math.random() * 0.4,
-    neutral: Math.random() * 0.5
-  };
-  
-  // Normalize to sum to 1
-  const sentimentSum = Object.values(overallSentiment).reduce((sum, val) => sum + val, 0);
-  Object.keys(overallSentiment).forEach(key => {
-    overallSentiment[key as keyof typeof overallSentiment] /= sentimentSum;
-  });
-  
-  // Generate emotion analysis
-  const emotionAnalysis = ['joy', 'sadness', 'anger', 'surprise', 'fear'].map(type => ({
-    type,
-    score: Math.random()
-  })).sort((a, b) => b.score - a.score);
-  
-  // Normalize emotion scores
-  const emotionSum = emotionAnalysis.reduce((sum, emotion) => sum + emotion.score, 0);
-  emotionAnalysis.forEach(emotion => {
-    emotion.score /= emotionSum;
-  });
-  
-  return {
-    platform: 'twitter',
-    user: twitterData.includes?.users?.[0] || { username: searchUsername },
-    posts,
-    overallSentiment,
-    emotions: emotionAnalysis,
-    timestamp,
-    _simulated: false,
-    originalData: twitterData
-  };
-};
 
 const SocialAnalyzer: React.FC = () => {
   const { user, signOut } = useAuth();
@@ -95,11 +36,9 @@ const SocialAnalyzer: React.FC = () => {
         
         console.log('Raw data received:', data);
         
-        // Process and transform the data for our visualization components
-        const processedData = generateMockAnalysisData(data, username);
-        console.log('Processed data:', processedData);
-        
-        return processedData;
+        // The data returned by fetch-tweets is already in the correct format
+        // No need for additional processing
+        return data;
       } catch (err: any) {
         console.error('Error fetching social data:', err);
         throw new Error(err.message || 'Failed to analyze social media data');

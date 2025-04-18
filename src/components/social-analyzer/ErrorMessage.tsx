@@ -25,9 +25,7 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({ error }) => {
             {errorMessage}
           </p>
           <p className="text-xs text-sentiment-negative/70 mt-2">
-            {isTwitterAPIError ? 
-              "Note: Twitter API access is limited. Some usernames may not be accessible." : 
-              "Note: This is a demo application. Data shown may be simulated if API access is restricted."}
+            Note: This is a demo application. Data shown is simulated since real Twitter API connections are not enabled.
           </p>
         </div>
       </div>
