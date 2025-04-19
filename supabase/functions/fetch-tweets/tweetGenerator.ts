@@ -1,6 +1,6 @@
 
-import { Post, User } from './types';
-import * as mockData from './mockData';
+import { Post, User } from './types.ts';
+import * as mockData from './mockData.ts';
 
 export function generateRandomTweet(): string {
   const template = mockData.tweetTemplates[Math.floor(Math.random() * mockData.tweetTemplates.length)];
@@ -56,4 +56,3 @@ export function getRandomTweets(count: number): Post[] {
   const shuffled = [...tweetPool].sort(() => 0.5 - Math.random());
   return shuffled.slice(0, count);
 }
-

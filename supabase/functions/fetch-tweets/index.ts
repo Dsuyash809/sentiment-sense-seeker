@@ -1,8 +1,8 @@
 
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SimulatedData } from './types';
-import { generateUser, getRandomTweets } from './tweetGenerator';
+import { SimulatedData } from './types.ts';
+import { generateUser, getRandomTweets } from './tweetGenerator.ts';
 
 // CORS Headers
 const corsHeaders = {
@@ -79,4 +79,3 @@ serve(async (req) => {
   }
   return handleRequest(req);
 });
-
