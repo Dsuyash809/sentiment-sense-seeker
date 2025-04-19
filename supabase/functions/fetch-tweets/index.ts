@@ -44,41 +44,65 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Array of realistic tweet templates
+// Array of tweet templates with diverse topics
 const tweetTemplates = [
-  // Sports related tweets
-  "Just finished an amazing {sport} game! Score was {score} 🏆 #Sports",
-  "Can't believe that {team} performance today! {player} was outstanding 🌟",
-  "Training session was intense today. New personal best in {exercise} 💪 #Fitness",
-  "Match day tomorrow against {opponent}! Let's bring home the win 🏃‍♂️",
-  "What a comeback by {team}! From {score1} to {score2} in the last quarter!",
-  "Proud to announce my partnership with {brand}! Exciting times ahead 🤝",
-  "Recovery day after yesterday's {competition}. Time to rest and recharge 🧘‍♂️",
-  "Thanks to all the fans who came out to support us today! Your energy was amazing 🙌",
-  "Working on my {skill} technique. Always room for improvement 📈",
-  "Big game coming up this weekend! Can't wait to face {opponent} 🏟️",
-  // Random scores and stats
-  "Season stats update: {stat1} in {games} games. Keep pushing! 📊",
-  "New milestone reached: {achievement}! Thanks to my amazing team 🏆",
-  "Watching {team1} vs {team2}. What a match! {score} 📺",
-  // Lifestyle and motivation
-  "Early morning workout completed ✅ Ready to tackle the day!",
-  "Rest day activities: {activity}. Balance is key 🎯",
-  "Grateful for another day of doing what I love 🙏",
-  "Special shoutout to my coach {name} for always pushing me to be better 👊",
-  "Film study session. Always learning, always growing 📚",
-  "Community event today at {location}! Come say hi! 👋",
-  "New gear day! Thanks {brand} for the awesome {equipment} 🎽"
+  // Sports tweets
+  "Just watched an incredible {sport} match! {team} vs {opponent} was epic 🏆",
+  "What a game by {player}! {score} points in tonight's match 🌟",
+  "{team} making history with their performance this season 🔥",
+  
+  // College tweets (English)
+  "First day at {college}! Can't wait to start this new journey 🎓",
+  "Campus life at {college} is incredible. Making memories every day 📚",
+  "Finals week at {college}. Time to pull those all-nighters ✍️",
+  "Proud to be part of {college}'s {department} department! #CollegeLife",
+  
+  // College tweets (Hindi)
+  "{college} में नया सेमेस्टर शुरू! नई उम्मीदें 🎓",
+  "कॉलेज का आखिरी साल {college} में। यादें हमेशा रहेंगी 💫",
+  "{college} के फेस्ट में आज धमाल! #CollegeFest",
+  
+  // Politics tweets (English)
+  "Important discussion in Parliament today about {policy} #IndianPolitics",
+  "Election results in {state} showing interesting trends! #Elections2025",
+  "New policy announcement by {minister} regarding {topic} #GovtPolicy",
+  
+  // Politics tweets (Hindi)
+  "{state} में नई सरकार की बड़ी घोषणा! #Politics",
+  "{minister} ने {topic} पर दिया बड़ा बयान #IndianPolitics",
+  "चुनाव प्रचार में {leader} का जोरदार भाषण #Elections",
+  
+  // India general tweets
+  "Celebrating the spirit of India at {festival} 🪔",
+  "Amazing street food tour in {city}! Nothing beats Indian cuisine 😋",
+  "Beautiful sunset at {monument} today 🌅 #IncredibleIndia",
+  
+  // Mixed Hindi tweets
+  "आज का दिन {city} में बहुत खास रहा 💫",
+  "{festival} की हार्दिक शुभकामनाएं 🪔",
+  "भारत की विविधता में एकता का उत्सव {event} 🇮🇳"
 ];
 
-const sports = ["basketball", "football", "soccer", "tennis", "baseball"];
-const teams = ["Warriors", "Lakers", "Bulls", "Celtics", "Heat", "Nets", "Clippers"];
-const players = ["LeBron", "Curry", "Durant", "Giannis", "Jokic", "Doncic"];
-const brands = ["Nike", "Adidas", "Under Armour", "Puma", "New Balance"];
-const exercises = ["squats", "deadlifts", "sprints", "vertical jump", "agility drills"];
-const locations = ["local gym", "community center", "training facility", "stadium"];
-const activities = ["yoga", "meditation", "recovery", "stretching", "massage"];
-const equipment = ["shoes", "jersey", "gear", "equipment", "accessories"];
+// Data arrays for tweet generation
+const sports = ["cricket", "football", "hockey", "kabaddi", "badminton"];
+const teams = ["Team India", "Mumbai Indians", "Chennai Kings", "Delhi Capitals", "Bengaluru FC"];
+const players = ["Virat", "Rohit", "Dhoni", "Hardik", "KL Rahul", "Jadeja"];
+const colleges = ["Delhi University", "IIT Bombay", "AIIMS", "St. Stephen's", "Lady Shri Ram", "Miranda House"];
+const departments = ["Engineering", "Arts", "Science", "Commerce", "Medical", "Law"];
+const states = ["UP", "Maharashtra", "Delhi", "Karnataka", "Gujarat", "Punjab"];
+const cities = ["Mumbai", "Delhi", "Bangalore", "Kolkata", "Chennai", "Hyderabad"];
+const ministers = ["Home Minister", "Education Minister", "PM", "Finance Minister"];
+const policies = ["education", "healthcare", "infrastructure", "economy", "technology"];
+const topics = ["digital india", "smart cities", "startup india", "clean energy"];
+const festivals = ["Diwali", "Holi", "Durga Puja", "Ganesh Chaturthi"];
+const monuments = ["Taj Mahal", "Red Fort", "India Gate", "Gateway of India"];
+const events = ["Republic Day", "Independence Day", "Unity Day"];
+const userHandles = [
+  "IndianStudent", "TechGuru", "SportsFanatic", "PoliticsDaily",
+  "FoodieExplorer", "TravelIndia", "NewsUpdate", "StartupPro",
+  "CricketLover", "CollegeLife", "DelhiVibes", "MumbaiMeri",
+  "कॉलेज_लाइफ", "भारत_दर्शन", "खेल_समाचार", "राजनीति_विशेष"
+];
 
 function generateRandomTweet(): string {
   const template = tweetTemplates[Math.floor(Math.random() * tweetTemplates.length)];
@@ -86,87 +110,86 @@ function generateRandomTweet(): string {
     .replace("{sport}", sports[Math.floor(Math.random() * sports.length)])
     .replace("{team}", teams[Math.floor(Math.random() * teams.length)])
     .replace("{player}", players[Math.floor(Math.random() * players.length)])
-    .replace("{brand}", brands[Math.floor(Math.random() * brands.length)])
-    .replace("{exercise}", exercises[Math.floor(Math.random() * exercises.length)])
+    .replace("{college}", colleges[Math.floor(Math.random() * colleges.length)])
+    .replace("{department}", departments[Math.floor(Math.random() * departments.length)])
+    .replace("{state}", states[Math.floor(Math.random() * states.length)])
+    .replace("{city}", cities[Math.floor(Math.random() * cities.length)])
+    .replace("{minister}", ministers[Math.floor(Math.random() * ministers.length)])
+    .replace("{policy}", policies[Math.floor(Math.random() * policies.length)])
+    .replace("{topic}", topics[Math.floor(Math.random() * topics.length)])
+    .replace("{festival}", festivals[Math.floor(Math.random() * festivals.length)])
+    .replace("{monument}", monuments[Math.floor(Math.random() * monuments.length)])
+    .replace("{event}", events[Math.floor(Math.random() * events.length)])
     .replace("{opponent}", teams[Math.floor(Math.random() * teams.length)])
-    .replace("{location}", locations[Math.floor(Math.random() * locations.length)])
-    .replace("{activity}", activities[Math.floor(Math.random() * activities.length)])
-    .replace("{equipment}", equipment[Math.floor(Math.random() * equipment.length)])
-    .replace("{score}", `${Math.floor(Math.random() * 50)}-${Math.floor(Math.random() * 50)}`)
-    .replace("{score1}", `${Math.floor(Math.random() * 50)}`)
-    .replace("{score2}", `${Math.floor(Math.random() * 50)}`)
-    .replace("{games}", `${Math.floor(Math.random() * 82)}`)
-    .replace("{stat1}", `${Math.floor(Math.random() * 30)} points`)
-    .replace("{achievement}", `${Math.floor(Math.random() * 1000)}th point`)
-    .replace("{team1}", teams[Math.floor(Math.random() * teams.length)])
-    .replace("{team2}", teams[Math.floor(Math.random() * teams.length)])
-    .replace("{name}", players[Math.floor(Math.random() * players.length)]);
+    .replace("{score}", `${Math.floor(Math.random() * 200)}`);
 }
 
-/**
- * Generates realistic simulated data for a given username
- */
+function generateUser(): User {
+  const randomHandle = userHandles[Math.floor(Math.random() * userHandles.length)];
+  return {
+    username: randomHandle,
+    name: randomHandle.replace(/[_-]/g, ' '),
+    profile_image_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${randomHandle}-${Date.now()}`
+  };
+}
+
+// Generate a pool of 500 tweets that we'll sample from
+const tweetPool: Post[] = Array.from({ length: 500 }, (_, i) => {
+  const date = new Date();
+  date.setDate(date.getDate() - Math.floor(Math.random() * 365));
+  
+  return {
+    id: `tweet-${i}-${Date.now()}-${Math.random()}`,
+    content: generateRandomTweet(),
+    date: date.toISOString(),
+    sentiment: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
+    score: Math.random(),
+    emotions: ['joy', 'sadness', 'anger', 'surprise', 'fear']
+      .map(type => ({
+        type,
+        score: Math.random()
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+  };
+});
+
+function getRandomTweets(count: number): Post[] {
+  const shuffled = [...tweetPool].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, count);
+}
+
 function generateSimulatedData(username: string): SimulatedData {
-  console.log("Generating simulated data for:", username);
+  const randomTweets = getRandomTweets(10); // Get 10 random tweets from the pool
   
-  // Generate 200 unique mock posts
-  const mockPosts: Post[] = Array.from({ length: 200 }, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - Math.floor(Math.random() * 365)); // Random date within last year
-    
-    return {
-      id: `sim-${i}-${Date.now()}-${Math.random()}`,
-      content: generateRandomTweet(),
-      date: date.toISOString(),
-      sentiment: ['positive', 'negative', 'neutral'][Math.floor(Math.random() * 3)],
-      score: Math.random(),
-      emotions: ['joy', 'sadness', 'anger', 'surprise', 'fear']
-        .map(type => ({
-          type,
-          score: Math.random()
-        }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 3)
-    };
-  });
-  
-  // Calculate sentiment distribution
+  // Calculate sentiment distribution based on selected tweets
   const overallSentiment: SentimentDistribution = {
-    positive: Math.random() * 0.6 + 0.2,
-    negative: Math.random() * 0.4,
-    neutral: Math.random() * 0.5
+    positive: randomTweets.filter(t => t.sentiment === 'positive').length / 10,
+    negative: randomTweets.filter(t => t.sentiment === 'negative').length / 10,
+    neutral: randomTweets.filter(t => t.sentiment === 'neutral').length / 10
   };
   
-  // Normalize sentiment scores
-  const sentimentSum = Object.values(overallSentiment).reduce((sum, val) => sum + val, 0);
-  Object.keys(overallSentiment).forEach(key => {
-    overallSentiment[key as keyof typeof overallSentiment] /= sentimentSum;
+  // Generate emotion analysis based on selected tweets
+  const emotionScores: { [key: string]: number } = {};
+  randomTweets.forEach(tweet => {
+    tweet.emotions.forEach(emotion => {
+      emotionScores[emotion.type] = (emotionScores[emotion.type] || 0) + emotion.score;
+    });
   });
   
-  // Generate emotion analysis
-  const emotionAnalysis: Emotion[] = ['joy', 'sadness', 'anger', 'surprise', 'fear']
-    .map(type => ({
+  const emotions = Object.entries(emotionScores)
+    .map(([type, score]) => ({
       type,
-      score: Math.random()
+      score: score / randomTweets.length
     }))
     .sort((a, b) => b.score - a.score);
   
-  // Normalize emotion scores
-  const emotionSum = emotionAnalysis.reduce((sum, emotion) => sum + emotion.score, 0);
-  emotionAnalysis.forEach(emotion => {
-    emotion.score /= emotionSum;
-  });
-  
   return {
     platform: 'twitter',
-    user: { 
-      username,
-      name: username,
-      profile_image_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}-${Date.now()}`
-    },
-    posts: mockPosts,
+    user: generateUser(), // Generate a random user for each analysis
+    posts: randomTweets,
     overallSentiment,
-    emotions: emotionAnalysis,
+    emotions,
     timestamp: new Date().toISOString(),
     _simulated: true
   };
