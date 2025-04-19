@@ -159,7 +159,20 @@ export const analyzeSentiment = (text: string): {
     /\bwell done\b/i,
     /\bgreat job\b/i,
     /\bperfect\b/i,
-    /\bimpressive\b/i
+    /\bimpressive\b/i,
+    
+    // Additional positive terms
+    /\bhelpful\b/i,
+    /\bbeautiful\b/i,
+    /\bexcited\b/i,
+    /\bawesome\b/i,
+    /\bglad\b/i,
+    /\bpleasure\b/i,
+    /\bsuccess\b/i,
+    /\bbrilliant\b/i,
+    /\bhope\b/i,
+    /\bwish\b/i,
+    /\bgood\b/i
   ];
   
   // Enhanced negative patterns with more complex sentences and contexts
@@ -256,12 +269,12 @@ export const analyzeSentiment = (text: string): {
     }
   });
   
-  // Determine sentiment based on scores with higher threshold for neutral
+  // Determine sentiment based on scores with a lower threshold for classifying as positive/negative
   let sentiment: "positive" | "negative" | "neutral";
   let score: number;
   
   const totalScore = positiveScore + negativeScore;
-  const neutralThreshold = 0.3; // Adjusted threshold for neutral classification
+  const neutralThreshold = 0.15; // Lowered threshold for neutral classification
   
   if (totalScore < neutralThreshold) {
     // Not enough sentiment signals, classify as neutral
